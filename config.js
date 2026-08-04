@@ -6,14 +6,14 @@
 const LOCAL_USER = 'Jonas';
 const LOCAL_PASS = '1q2w3e4r5t';
 
-// ---- Sincronización con Google Sheets (opcional) ----
-// 1) Client ID del OAuth creado en Google Cloud Console
+// ---- LOGIN CON GOOGLE (opcional) ----
+// Client ID del OAuth (Google Cloud Console) para el botón "Acceder con Google"
 const GOOGLE_CLIENT_ID = '1002515762360-spd8tpus94hgbhfjtuuh8j8djg99kb1e.apps.googleusercontent.com';
-// 2) ID de tu hoja de cálculo (la parte entre /d/ y /edit en la URL)
-const GOOGLE_SHEET_ID = '1NTpKJ9SxVsSQFqOeyFA6TrlIv9Lx78vX4sq4c_44yvg';
-// 3) Nombre de la pestaña de la hoja donde se guarda la base de datos
-const GOOGLE_SHEET_TAB = 'DB';
-// 4) Correos autorizados (separados por coma) para iniciar sesión con Google
+// Correos autorizados (separados por coma) para iniciar sesión con Google
 const GOOGLE_ALLOWED_EMAILS = 'abantofloreslj@gmail.com';
 
-const GOOGLE_SCOPE = 'https://www.googleapis.com/auth/spreadsheets';
+// ---- SINCRONIZACIÓN (Google Apps Script) ----
+// URL del Web App desplegado (termina en /exec)
+const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/TU_ID/exec';
+// Clave secreta compartida entre la app y el script (cámbiala por otra)
+const GOOGLE_SCRIPT_KEY = 'cambia-esta-clave';

@@ -434,9 +434,6 @@ footer { text-align: center; padding: 1.8rem 1rem 2.2rem; color: var(--text3); f
 <script>pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';</script>
 <script>
 // ============== LOGIN GOOGLE ==============
-let gTokenClient = null;
-let gAccesToken = null;
-
 function mostrarLogin() { document.getElementById('login-screen').classList.remove('hidden'); }
 function ocultarLogin() { document.getElementById('login-screen').classList.add('hidden'); }
 
@@ -450,21 +447,14 @@ function googleListo(cb) {
 }
 
 function iniciarGoogleLogin() {
-  gTokenClient = google.accounts.oauth2.initTokenClient({
+  google.accounts.id.initialize({
     client_id: GOOGLE_CLIENT_ID,
-    scope: 'openid email profile ' + GOOGLE_SCOPE,
-    prompt: '',
-    callback: onTokenResp
+    callback: onGoogleLogin,
+    auto_select: false
   });
-  document.getElementById('g-signin-wrap').innerHTML =
-    '<button class="g-btn" onclick="loginGoogle()">' +
-    '<svg viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>' +
-    '<span>Acceder con Google</span></button>';
-}
-
-function loginGoogle() {
-  if (!gTokenClient) return;
-  gTokenClient.requestAccessToken({ prompt: 'consent' });
+  google.accounts.id.renderButton(document.getElementById('g-signin-wrap'), {
+    type: 'standard', shape: 'rectangular', theme: 'filled_black', text: 'signin_with', size: 'large', width: 250
+  });
 }
 
 function decodificarJWT(token) {
@@ -476,44 +466,23 @@ function decodificarJWT(token) {
   } catch (e) { return {}; }
 }
 
-async function onTokenResp(resp) {
+async function onGoogleLogin(resp) {
   const errEl = document.getElementById('login-error');
-  if (!resp || resp.error || !resp.access_token) {
+  if (!resp || !resp.credential) {
     errEl.textContent = 'No se pudo iniciar sesión con Google. Reintenta.';
     errEl.style.display = 'block';
     return;
   }
-  let email = decodificarJWT(resp.id_token || '').email;
-  if (!email) {
-    try {
-      const ui = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
-        headers: { 'Authorization': 'Bearer ' + resp.access_token }
-      });
-      if (ui.ok) { const d = await ui.json(); email = d.email; }
-    } catch (e) {}
-  }
-  if (!estaAutorizado(email)) {
-    errEl.textContent = 'El correo "' + (email || 'desconocido') + '" no está autorizado para acceder.';
+  const payload = decodificarJWT(resp.credential);
+  if (!estaAutorizado(payload.email)) {
+    errEl.textContent = 'El correo "' + (payload.email || 'desconocido') + '" no está autorizado para acceder.';
     errEl.style.display = 'block';
     return;
   }
-  gAccesToken = resp.access_token;
   localStorage.setItem('deudas_logged', '1');
-  localStorage.setItem('deudas_logged_email', email);
+  localStorage.setItem('deudas_logged_email', payload.email);
   errEl.style.display = 'none';
   trasLogin();
-}
-
-function getAccessToken() {
-  return new Promise((resolve) => {
-    if (gAccesToken) { resolve(gAccesToken); return; }
-    if (!gTokenClient) { resolve(null); return; }
-    gTokenClient.callback = (resp) => {
-      if (resp && resp.access_token) { gAccesToken = resp.access_token; resolve(gAccesToken); }
-      else resolve(null);
-    };
-    gTokenClient.requestAccessToken();
-  });
 }
 
 async function trasLogin() {
@@ -529,7 +498,6 @@ function logout() {
   loginLocalActivo = false;
   localStorage.removeItem('deudas_logged');
   localStorage.removeItem('deudas_logged_email');
-  gAccesToken = null;
   if (typeof google !== 'undefined' && google.accounts) { try { google.accounts.id.disableAutoSelect(); } catch (e) {} }
   mostrarLogin();
   setSync('', '☁️ —');
@@ -555,73 +523,57 @@ function loginLocal() {
   }
 }
 
-// ============== GOOGLE SHEETS ==============
-let sheetTabName = GOOGLE_SHEET_TAB;
+// ============== SINCRONIZACIÓN (GOOGLE APPS SCRIPT) ==============
+const SCRIPT_URL = GOOGLE_SCRIPT_URL;
+let sincronizando = false;
 
-async function sheetApi(path, metodo, body) {
-  const token = await getAccessToken();
-  if (!token) throw new Error('Sin token');
-  const r = await fetch('https://sheets.googleapis.com/v4/spreadsheets/' + GOOGLE_SHEET_ID + '/' + path, {
-    method: metodo,
-    headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
-    body: body ? JSON.stringify(body) : undefined
-  });
-  if (!r.ok) {
-    let msg = 'Sheets HTTP ' + r.status;
-    try { const t = await r.text(); if (t) msg += ': ' + t.slice(0, 200); } catch (e) {}
-    throw new Error(msg);
-  }
-  return r.json();
+async function leerDesdeSheet() {
+  const r = await fetch(SCRIPT_URL + '?k=' + GOOGLE_SCRIPT_KEY);
+  const j = await r.json();
+  if (j && j.db) return j.db;
+  return null;
 }
 
-async function initSheetTab() {
+async function escribirEnSheet() {
+  if (sincronizando) return false;
+  sincronizando = true;
   try {
-    const meta = await sheetApi('?fields=sheets.properties.title', 'GET');
-    const tabs = (meta.sheets || []).map(s => s.properties && s.properties.title).filter(Boolean);
-    const exact = tabs.find(t => t === GOOGLE_SHEET_TAB);
-    sheetTabName = exact || tabs[0] || GOOGLE_SHEET_TAB;
-  } catch (e) {}
+    const r = await fetch(SCRIPT_URL + '?k=' + GOOGLE_SCRIPT_KEY, {
+      method: 'POST',
+      body: JSON.stringify(db)
+    });
+    const j = await r.json();
+    if (j && j.ok) { setSync('ok', '☁️ Sincronizado'); return true; }
+    console.error('Error de sincronización:', j && j.error);
+    setSync('err', '⚠️ No se pudo subir a la hoja');
+    return false;
+  } catch (e) {
+    console.error('Error de sincronización:', e);
+    setSync('err', '⚠️ Sin conexión — guardado local');
+    return false;
+  } finally {
+    sincronizando = false;
+  }
 }
 
 async function cargarDesdeSheet() {
-  await initSheetTab();
-  let remoto = null;
   try {
-    const res = await sheetApi('values/' + sheetTabName + '!A1:A1', 'GET');
-    if (res && res.values && res.values.length) remoto = res.values[0][0];
+    const remoto = await leerDesdeSheet();
+    if (!remoto) return 'migrar';
+    const tR = remoto.updatedAt || 0, tL = db.updatedAt || 0;
+    if (tR > tL) {
+      db = { deudores: remoto.deudores || [], moneda: remoto.moneda || 'S/', titular: remoto.titular || '', updatedAt: tR };
+      localStorage.setItem(DB_KEY, JSON.stringify(db));
+      return 'newer';
+    }
+    return 'local';
   } catch (e) { return 'error'; }
-  if (!remoto) return 'migrar';
-  let parsed = null;
-  try { parsed = JSON.parse(remoto); } catch (e) {}
-  if (!parsed || !Array.isArray(parsed.deudores)) return 'migrar';
-  const tR = parsed.updatedAt || 0, tL = db.updatedAt || 0;
-  if (tR > tL) {
-    db = { deudores: parsed.deudores, moneda: parsed.moneda || 'S/', titular: parsed.titular || '', updatedAt: tR };
-    localStorage.setItem(DB_KEY, JSON.stringify(db));
-    return 'newer';
-  }
-  return 'local';
-}
-
-async function pushToSheet() {
-  setSync('warn', '☁️ Subiendo…');
-  try {
-    await sheetApi('values/' + sheetTabName + '!A1:A1?valueInputOption=RAW', 'PUT', {
-      range: sheetTabName + '!A1:A1', majorDimension: 'ROWS', values: [[JSON.stringify(db)]]
-    });
-    setSync('ok', '☁️ Sincronizado');
-    return true;
-  } catch (e) {
-    console.error('Error de sincronización:', e);
-    setSync('err', '⚠️ No se pudo subir a la hoja');
-    return false;
-  }
 }
 
 async function subirDatosActuales() {
   db.updatedAt = Date.now();
   localStorage.setItem(DB_KEY, JSON.stringify(db));
-  return pushToSheet();
+  return escribirEnSheet();
 }
 
 let syncTimer = null;
@@ -629,11 +581,9 @@ function guardar() {
   db.updatedAt = Date.now();
   localStorage.setItem(DB_KEY, JSON.stringify(db));
   if (localStorage.getItem('deudas_logged') !== '1') return;
-  if (loginLocalActivo) return;
-  if (!gAccesToken && !gTokenClient) return;
   setSync('warn', '☁️ Guardando…');
   clearTimeout(syncTimer);
-  syncTimer = setTimeout(pushToSheet, 2000);
+  syncTimer = setTimeout(escribirEnSheet, 2000);
 }
 
 function setSync(tipo, txt) {
@@ -644,10 +594,7 @@ function setSync(tipo, txt) {
 }
 
 async function sincronizarAhora() {
-  if (loginLocalActivo || !localStorage.getItem('deudas_logged_email')) {
-    setSync('', '💾 Local');
-    return;
-  }
+  if (localStorage.getItem('deudas_logged') !== '1') return;
   setSync('warn', '☁️ Sincronizando…');
   const ok = await cargarDesdeSheet();
   if (ok === 'newer') { renderResumen(); renderLista(); aplicarTotales(); setSync('ok', '☁️ Sincronizado'); }
@@ -1998,14 +1945,8 @@ render();
   googleListo(() => {
     iniciarGoogleLogin();
     if (localStorage.getItem('deudas_logged') === '1') {
-      if (localStorage.getItem('deudas_logged_email')) {
-        ocultarLogin();
-        setSync('warn', '☁️ Pulsa para sincronizar');
-      } else {
-        loginLocalActivo = true;
-        setSync('', '💾 Local');
-        ocultarLogin();
-      }
+      if (!localStorage.getItem('deudas_logged_email')) loginLocalActivo = true;
+      trasLogin();
     } else {
       mostrarLogin();
     }
