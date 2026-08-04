@@ -607,7 +607,7 @@ async function pushToSheet() {
   setSync('warn', '☁️ Subiendo…');
   try {
     await sheetApi('values/' + sheetTabName + '!A1:A1?valueInputOption=RAW', 'PUT', {
-      range: sheetTabName + '!A1', majorDimension: 'ROWS', values: [[JSON.stringify(db)]]
+      range: sheetTabName + '!A1:A1', majorDimension: 'ROWS', values: [[JSON.stringify(db)]]
     });
     setSync('ok', '☁️ Sincronizado');
     return true;
