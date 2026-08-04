@@ -464,7 +464,7 @@ function iniciarGoogleLogin() {
 
 function loginGoogle() {
   if (!gTokenClient) return;
-  gTokenClient.requestAccessToken();
+  gTokenClient.requestAccessToken({ prompt: 'consent' });
 }
 
 function decodificarJWT(token) {
@@ -476,22 +476,30 @@ function decodificarJWT(token) {
   } catch (e) { return {}; }
 }
 
-function onTokenResp(resp) {
+async function onTokenResp(resp) {
   const errEl = document.getElementById('login-error');
   if (!resp || resp.error || !resp.access_token) {
     errEl.textContent = 'No se pudo iniciar sesión con Google. Reintenta.';
     errEl.style.display = 'block';
     return;
   }
-  const payload = decodificarJWT(resp.id_token || '');
-  if (!estaAutorizado(payload.email)) {
-    errEl.textContent = 'El correo "' + (payload.email || 'desconocido') + '" no está autorizado para acceder.';
+  let email = decodificarJWT(resp.id_token || '').email;
+  if (!email) {
+    try {
+      const ui = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+        headers: { 'Authorization': 'Bearer ' + resp.access_token }
+      });
+      if (ui.ok) { const d = await ui.json(); email = d.email; }
+    } catch (e) {}
+  }
+  if (!estaAutorizado(email)) {
+    errEl.textContent = 'El correo "' + (email || 'desconocido') + '" no está autorizado para acceder.';
     errEl.style.display = 'block';
     return;
   }
   gAccesToken = resp.access_token;
   localStorage.setItem('deudas_logged', '1');
-  localStorage.setItem('deudas_logged_email', payload.email);
+  localStorage.setItem('deudas_logged_email', email);
   errEl.style.display = 'none';
   trasLogin();
 }
