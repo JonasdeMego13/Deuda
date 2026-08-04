@@ -566,7 +566,11 @@ async function sheetApi(path, metodo, body) {
     headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
     body: body ? JSON.stringify(body) : undefined
   });
-  if (!r.ok) throw new Error('Sheets HTTP ' + r.status);
+  if (!r.ok) {
+    let msg = 'Sheets HTTP ' + r.status;
+    try { const t = await r.text(); if (t) msg += ': ' + t.slice(0, 200); } catch (e) {}
+    throw new Error(msg);
+  }
   return r.json();
 }
 
@@ -608,7 +612,8 @@ async function pushToSheet() {
     setSync('ok', '☁️ Sincronizado');
     return true;
   } catch (e) {
-    setSync('err', '⚠️ Sin conexión — guardado local');
+    console.error('Error de sincronización:', e);
+    setSync('err', '⚠️ No se pudo subir a la hoja');
     return false;
   }
 }
@@ -645,9 +650,12 @@ async function sincronizarAhora() {
   }
   setSync('warn', '☁️ Sincronizando…');
   const ok = await cargarDesdeSheet();
-  if (ok === 'newer') { renderResumen(); renderLista(); aplicarTotales(); }
-  if (ok === 'error') setSync('err', '⚠️ Sin conexión — datos locales');
-  else setSync('ok', '☁️ Sincronizado');
+  if (ok === 'newer') { renderResumen(); renderLista(); aplicarTotales(); setSync('ok', '☁️ Sincronizado'); }
+  else if (ok === 'error') setSync('err', '⚠️ Sin conexión — datos locales');
+  else {
+    const subido = await subirDatosActuales();
+    if (subido) { renderResumen(); renderLista(); aplicarTotales(); }
+  }
 }
 
 // ============== ESTADO ==============
