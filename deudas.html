@@ -481,7 +481,7 @@ function onTokenResp(resp) {
     }
   } catch (e) {}
   if (!estaAutorizado(payload.email)) {
-    errEl.textContent = 'Este correo no está autorizado para acceder.';
+    errEl.textContent = 'El correo "' + (payload.email || 'desconocido') + '" no está autorizado para acceder.';
     errEl.style.display = 'block';
     return;
   }
