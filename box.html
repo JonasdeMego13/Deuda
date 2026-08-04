@@ -1,0 +1,1533 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect x='6' y='2' width='20' height='28' rx='2' fill='%231a237e'/><rect x='6' y='2' width='20' height='24' rx='2' fill='%23fff' stroke='%231a237e' stroke-width='1.5'/><line x1='10' y1='9' x2='22' y2='9' stroke='%231a237e' stroke-width='1.5' stroke-linecap='round'/><line x1='10' y1='14' x2='22' y2='14' stroke='%231a237e' stroke-width='1.5' stroke-linecap='round'/><line x1='10' y1='19' x2='18' y2='19' stroke='%231a237e' stroke-width='1.5' stroke-linecap='round'/><rect x='13' y='25' width='6' height='6' rx='1' fill='%231a237e'/></svg>">
+<title>SEC - Sistema Empadronador Confianza</title>
+<style>
+:root {
+  --bg: #eef1f5; --bg2: #ffffff; --bg3: #f7f8fc; --bg4: #edeff5; --bg5: #f5f6fa;
+  --text: #1e1e2e; --text2: #4a4a5a; --text3: #888;
+  --border: #e2e5ee; --border2: #cdd1de;
+  --primary: #2a3f8f; --primary-hover: #1a2d6e;
+  --primary-light: rgba(42,63,143,.08);
+  --danger: #d32f2f; --danger-hover: #b71c1c;
+  --success: #2e7d32; --success-hover: #1b5e20;
+  --secondary: #6b7280; --secondary-hover: #4b5563;
+  --shadow: 0 1px 3px rgba(0,0,0,.06), 0 1px 2px rgba(0,0,0,.04);
+  --shadow-lg: 0 10px 40px rgba(0,0,0,.08), 0 2px 8px rgba(0,0,0,.04);
+  --radius: 10px; --radius-sm: 6px;
+  --f-f: #e8f5e9; --f-o: #e3f2fd; --f-d: #fff3e0; --f-a: #fce4ec;
+  --f-f-b: #2e7d32; --f-o-b: #1565c0; --f-d-b: #e65100; --f-a-b: #c62828;
+}
+body.dark {
+  --bg: #13131f; --bg2: #1c1c30; --bg3: #21213a; --bg4: #282845; --bg5: #252540;
+  --text: #e2e2f0; --text2: #a0a0b8; --text3: #707088;
+  --border: #2f2f50; --border2: #3d3d60;
+  --primary: #6c7fd8; --primary-hover: #8898e0;
+  --primary-light: rgba(108,127,216,.12);
+  --danger: #ef5350; --danger-hover: #e57373;
+  --success: #66bb6a; --success-hover: #81c784;
+  --secondary: #6b7280; --secondary-hover: #8b92a0;
+  --shadow: 0 1px 3px rgba(0,0,0,.15), 0 1px 2px rgba(0,0,0,.1);
+  --shadow-lg: 0 10px 40px rgba(0,0,0,.25), 0 2px 8px rgba(0,0,0,.12);
+  --f-f: #1b3d1b; --f-o: #1a2a4a; --f-d: #4a2a1a; --f-a: #4a1a1a;
+  --f-f-b: #66bb6a; --f-o-b: #64b5f6; --f-d-b: #ffb74d; --f-a-b: #ef5350;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'Inter', 'Segoe UI', Tahoma, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+header { background: linear-gradient(135deg, #1a237e 0%, #283593 100%); color: #fff; padding: .85rem 2rem; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 2px 12px rgba(0,0,0,.15); position: sticky; top: 0; z-index: 100; }
+header h1 { font-size: 1.35rem; font-weight: 700; letter-spacing: -.3px; display: flex; align-items: center; gap: .5rem; }
+header h1::before { content: ''; }
+nav { display: flex; gap: .35rem; align-items: center; }
+nav button { background: rgba(255,255,255,.12); border: 1px solid rgba(255,255,255,.2); color: #fff; padding: .45rem .9rem; border-radius: var(--radius-sm); cursor: pointer; font-size: .82rem; font-weight: 500; transition: all .2s; backdrop-filter: blur(4px); }
+nav button:hover { background: rgba(255,255,255,.22); transform: translateY(-1px); }
+nav button.active { background: rgba(255,255,255,.25); border-color: #fff; box-shadow: 0 2px 8px rgba(0,0,0,.15); }
+.container { max-width: 1200px; margin: 1.5rem auto; padding: 0 1rem; }
+.section { display: none; background: var(--bg2); border-radius: var(--radius); box-shadow: var(--shadow-lg); padding: 1.5rem; border: 1px solid var(--border); }
+.section.active { display: block; animation: fadeIn .25s ease; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+h2 { margin-bottom: 1.25rem; color: var(--primary); font-size: 1.2rem; font-weight: 700; display: flex; align-items: center; gap: .5rem; }
+.form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: .9rem; }
+.form-group { display: flex; flex-direction: column; }
+.form-group.full { grid-column: 1 / -1; }
+.form-group label { font-weight: 600; font-size: .78rem; margin-bottom: .25rem; color: var(--text2); letter-spacing: .2px; }
+.form-group input, .form-group textarea, .form-group select { padding: .58rem .8rem; border: 1.5px solid var(--border2); border-radius: var(--radius-sm); font-size: .88rem; outline: none; transition: all .2s; background: var(--bg2); color: var(--text); }
+.form-group input:hover, .form-group textarea:hover, .form-group select:hover { border-color: var(--primary); }
+.form-group input:focus, .form-group textarea:focus, .form-group select:focus { border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-light); }
+.form-group textarea { resize: vertical; min-height: 80px; }
+.btn { padding: .55rem 1.3rem; border: none; border-radius: var(--radius-sm); cursor: pointer; font-size: .85rem; font-weight: 600; transition: all .2s; display: inline-flex; align-items: center; gap: .4rem; }
+.btn:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,0,0,.12); }
+.btn:active { transform: translateY(0); }
+.btn-primary { background: var(--primary); color: #fff; }
+.btn-primary:hover { background: var(--primary-hover); }
+.btn-danger { background: var(--danger); color: #fff; }
+.btn-danger:hover { background: var(--danger-hover); }
+.btn-success { background: var(--success); color: #fff; }
+.btn-success:hover { background: var(--success-hover); }
+.btn-secondary { background: var(--secondary); color: #fff; }
+.btn-secondary:hover { background: var(--secondary-hover); }
+.form-actions { display: flex; gap: .6rem; margin-top: 1.5rem; flex-wrap: wrap; }
+
+table { width: 100%; border-collapse: separate; border-spacing: 0; margin-top: .5rem; border-radius: var(--radius-sm); overflow: hidden; }
+th, td { text-align: left; padding: .7rem .8rem; border-bottom: 1px solid var(--border); }
+th { background: var(--bg4); font-weight: 600; color: var(--text2); font-size: .8rem; text-transform: uppercase; letter-spacing: .5px; }
+tr:last-child td { border-bottom: none; }
+tr:hover td { background: var(--bg3); }
+.actions-cell { display: flex; gap: .35rem; }
+.actions-cell button { padding: .25rem .55rem; font-size: .75rem; }
+
+.file-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: .8rem; margin-top: .8rem; }
+.file-card { background: var(--bg3); border: 1px solid var(--border); border-radius: var(--radius-sm); overflow: hidden; position: relative; transition: all .2s; }
+.file-card:hover { border-color: var(--primary); box-shadow: 0 4px 12px rgba(0,0,0,.08); transform: translateY(-2px); }
+.file-card img, .file-card video { width: 100%; height: 130px; object-fit: cover; display: block; }
+.file-card audio { width: 100%; margin-top: .3rem; }
+.file-card .file-info { padding: .5rem .6rem; }
+.file-card .file-name { font-size: .78rem; word-break: break-all; font-weight: 500; }
+.file-card .file-size { font-size: .7rem; color: var(--text3); }
+.file-card .file-remove { position: absolute; top: 5px; right: 5px; background: rgba(0,0,0,.55); color: #fff; border: none; border-radius: 50%; width: 22px; height: 22px; cursor: pointer; font-size: .85rem; line-height: 22px; text-align: center; opacity: 0; transition: opacity .2s; }
+.file-card:hover .file-remove { opacity: 1; }
+.file-card .file-type { font-size: .65rem; color: #fff; background: var(--primary); padding: 1px 5px; border-radius: 3px; display: inline-block; margin-top: 3px; font-weight: 500; }
+
+.dropzone { border: 2px dashed var(--border2); border-radius: var(--radius); padding: 2rem; text-align: center; cursor: pointer; transition: all .25s; margin-bottom: 1rem; background: var(--bg3); }
+.dropzone:hover, .dropzone.dragover { border-color: var(--primary); background: var(--primary-light); }
+.dropzone p { color: var(--text3); font-size: .9rem; }
+.dropzone .icon { font-size: 2rem; margin-bottom: .3rem; opacity: .6; }
+
+.person-detail { display: none; }
+.person-detail.active { display: block; }
+.back-btn { margin-bottom: 1rem; }
+.tabs { display: flex; gap: .35rem; margin-bottom: 1rem; flex-wrap: wrap; border-bottom: 1.5px solid var(--border); padding-bottom: .5rem; }
+.tab-btn { padding: .45rem 1rem; border: none; background: transparent; color: var(--text2); border-radius: var(--radius-sm); cursor: pointer; font-size: .82rem; font-weight: 500; transition: all .2s; }
+.tab-btn:hover { background: var(--bg3); color: var(--text); }
+.tab-btn.active { background: var(--primary); color: #fff; box-shadow: 0 2px 8px rgba(42,63,143,.25); }
+.tab-content { display: none; animation: fadeIn .2s ease; }
+.tab-content.active { display: block; }
+.foda-grid { display: grid; grid-template-columns: 1fr 1fr; gap: .8rem; }
+.foda-item { padding: 1rem; border-radius: var(--radius-sm); min-height: 110px; transition: transform .2s; }
+.foda-item:hover { transform: scale(1.01); }
+.foda-item h4 { margin-bottom: .4rem; font-size: .85rem; }
+.foda-f { background: var(--f-f); border-left: 4px solid var(--f-f-b); }
+.foda-o { background: var(--f-o); border-left: 4px solid var(--f-o-b); }
+.foda-d { background: var(--f-d); border-left: 4px solid var(--f-d-b); }
+.foda-a { background: var(--f-a); border-left: 4px solid var(--f-a-b); }
+.family-member { display: flex; gap: .5rem; align-items: center; padding: .6rem .8rem; background: var(--bg5); border: 1px solid var(--border); border-radius: var(--radius-sm); margin-bottom: .5rem; }
+.family-member input { flex: 1; }
+.family-member select { width: 110px; }
+
+.search-bar { display: flex; gap: .5rem; margin-bottom: 1rem; }
+.search-bar input { flex: 1; padding: .55rem .8rem; border: 1.5px solid var(--border2); border-radius: var(--radius-sm); font-size: .88rem; background: var(--bg2); color: var(--text); outline: none; transition: all .2s; }
+.search-bar input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-light); }
+.empty-msg { text-align: center; padding: 2.5rem; color: var(--text3); font-size: .9rem; }
+
+.modal { position:fixed; inset:0; background:rgba(0,0,0,.4); backdrop-filter:blur(4px); display:flex; align-items:center; justify-content:center; z-index:9998; animation:fadeIn .2s ease; }
+.modal-content { background:var(--bg2); border-radius:var(--radius); width:92%; max-width:700px; max-height:88vh; overflow-y:auto; box-shadow:var(--shadow-lg); border:1px solid var(--border); }
+.modal-header { display:flex; justify-content:space-between; align-items:center; padding:1rem 1.5rem; border-bottom:1px solid var(--border); }
+.modal-header h2 { margin:0; color:var(--primary); font-size:1.15rem; }
+.modal-close { background:var(--bg4); border:none; font-size:1.2rem; cursor:pointer; color:var(--text2); width:32px; height:32px; border-radius:50%; display:flex; align-items:center; justify-content:center; transition:all .2s; }
+.modal-close:hover { background:var(--danger); color:#fff; }
+.modal-body { padding:1.5rem; }
+.modal-footer { padding:.8rem 1.5rem; border-top:1px solid var(--border); text-align:right; display:flex; gap:.5rem; justify-content:flex-end; }
+.ficha-section { margin-bottom:1.2rem; }
+.ficha-section h3 { font-size:.95rem; color:var(--primary); border-bottom:2px solid var(--primary); padding-bottom:.25rem; margin-bottom:.6rem; font-weight:600; }
+.ficha-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(190px,1fr)); gap:.4rem; }
+.ficha-item { display:flex; flex-direction:column; background:var(--bg3); padding:.5rem .7rem; border-radius:var(--radius-sm); }
+.ficha-item .label { font-size:.68rem; color:var(--text3); font-weight:600; text-transform:uppercase; letter-spacing:.3px; }
+.ficha-item .value { font-size:.9rem; color:var(--text); font-weight:500; }
+.ficha-item.full { grid-column:1/-1; }
+.ficha-foda { display:grid; grid-template-columns:1fr 1fr; gap:.6rem; margin-top:.5rem; }
+.ficha-foda-item { padding:.6rem .8rem; border-radius:var(--radius-sm); }
+.ficha-foda-item h4 { font-size:.8rem; margin-bottom:.2rem; }
+.ficha-foda-item p { font-size:.8rem; white-space:pre-wrap; }
+.ficha-fort { background:var(--f-f); border-left:3px solid var(--f-f-b); }
+.ficha-opor { background:var(--f-o); border-left:3px solid var(--f-o-b); }
+.ficha-debi { background:var(--f-d); border-left:3px solid var(--f-d-b); }
+.ficha-amen { background:var(--f-a); border-left:3px solid var(--f-a-b); }
+.ficha-familia { width:100%; border-collapse:separate; border-spacing:0; margin-top:.3rem; border-radius:var(--radius-sm); overflow:hidden; }
+.ficha-familia th { background:var(--bg4); font-size:.75rem; padding:.4rem .5rem; text-align:left; border-bottom:1px solid var(--border); font-weight:600; text-transform:uppercase; letter-spacing:.3px; color:var(--text2); }
+.ficha-familia td { padding:.4rem .5rem; border-bottom:1px solid var(--border); font-size:.8rem; }
+.ficha-familia tr:last-child td { border-bottom:none; }
+#login-screen { position:fixed; inset:0; background:linear-gradient(135deg,#0f0c29,#302b63,#24243e); display:flex; align-items:center; justify-content:center; z-index:9999; }
+#login-screen.hidden { display:none; }
+.login-box { background:var(--bg2); border-radius:var(--radius); padding:2.5rem 2rem; width:90%; max-width:380px; box-shadow:0 20px 60px rgba(0,0,0,.3); border:1px solid var(--border); text-align:center; }
+.login-box h2 { margin-bottom:.15rem; color:var(--primary); font-size:1.5rem; }
+.login-box p { color:var(--text3); font-size:.85rem; margin-bottom:1.5rem; }
+.login-box .btn { width:100%; margin-top:.5rem; padding:.65rem; font-size:.95rem; }
+
+@media (max-width: 768px) {
+  header { flex-direction: column; gap: .4rem; text-align: center; padding: .6rem 1rem; }
+  nav { flex-wrap: wrap; justify-content: center; }
+  nav button { font-size: .78rem; padding: .35rem .7rem; }
+  .form-grid { grid-template-columns: 1fr; }
+  .foda-grid { grid-template-columns: 1fr; }
+  .file-grid { grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); }
+  .container { margin: .8rem auto; }
+  .section { padding: 1rem; }
+  .tabs { gap: .25rem; }
+  .tab-btn { font-size: .78rem; padding: .35rem .7rem; }
+  .family-member { flex-wrap: wrap; }
+  .family-member select { width: 100%; }
+}
+</style>
+</head>
+<body>
+<div id="login-screen">
+  <div class="login-box">
+    <div style="display:flex;align-items:center;justify-content:center;gap:.5rem;margin-bottom:.15rem;">
+      <div style="background:var(--primary);color:#fff;width:38px;height:38px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:1rem;">SEC</div>
+      <h2 style="margin:0;">Sistema Empadronador Confianza</h2>
+    </div>
+    <p style="color:#888;margin-bottom:1.5rem;">Inicia sesión para continuar</p>
+    <div class="form-group">
+      <label>Usuario</label>
+      <input type="text" id="login-user" placeholder="Usuario" onkeydown="if(event.key==='Enter') login()">
+    </div>
+    <div class="form-group">
+      <label>Contraseña</label>
+      <input type="password" id="login-pass" placeholder="Contraseña" onkeydown="if(event.key==='Enter') login()">
+    </div>
+    <div id="login-error" style="color:#d32f2f;font-size:.85rem;margin-bottom:.5rem;display:none;">Usuario o contraseña incorrectos</div>
+    <button class="btn btn-primary" onclick="login()" style="width:100%;margin-top:.5rem;">Ingresar</button>
+  </div>
+</div>
+<header id="main-header" style="display:none;">
+  <div style="display:flex;align-items:center;gap:.5rem;">
+    <div style="background:rgba(255,255,255,.15);color:#fff;width:32px;height:32px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.85rem;">SEC</div>
+    <h1 style="font-size:1.1rem;">Sistema Empadronador Confianza</h1>
+  </div>
+  <nav>
+    <button class="active" onclick="showSection('personas')">Personas</button>
+    <button onclick="showSection('archivos')">Archivos</button>
+    <button onclick="exportarDatos()">Exportar</button>
+    <button onclick="document.getElementById('import-input').click()">Importar JSON</button>
+    <button onclick="document.getElementById('import-csv-input').click()">Importar CSV</button>
+    <button onclick="toggleTema()" id="tema-btn" style="background:rgba(255,255,255,.1);font-size:1.1rem;">🌙</button>
+    <button onclick="logout()" style="background:rgba(255,255,255,.1);">Cerrar sesión</button>
+  </nav>
+</header>
+<input type="file" id="import-input" accept=".json" style="display:none" onchange="importarDatos(event)">
+<input type="file" id="import-csv-input" accept=".csv,.txt" style="display:none" onchange="importarCSV(event)">
+
+<div class="container" id="main-container" style="display:none;">
+  <!-- SECCION PERSONAS -->
+  <div id="section-personas" class="section active">
+    <div id="persona-list-view">
+      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:.5rem;margin-bottom:1rem;">
+        <h2>Personas</h2>
+        <button class="btn btn-primary" onclick="nuevaPersona()">+ Nueva Persona</button>
+      </div>
+      <div class="search-bar">
+        <input type="text" id="searchPersona" placeholder="Buscar por nombre o documento..." oninput="renderPersonas()">
+      </div>
+      <div id="personas-table-wrapper"></div>
+    </div>
+
+    <div id="persona-detail-view" class="person-detail">
+      <button class="btn btn-secondary back-btn" onclick="volverLista()">← Volver</button>
+      <h2 id="persona-detail-title">Nueva Persona</h2>
+      <input type="hidden" id="editId">
+
+      <div class="tabs">
+        <button class="tab-btn active" onclick="switchTab('basico',this)">Información Básica</button>
+        <button class="tab-btn" onclick="switchTab('laboral',this)">Laboral</button>
+        <button class="tab-btn" onclick="switchTab('contacto',this)">Contacto</button>
+        <button class="tab-btn" onclick="switchTab('familia',this)">Familia</button>
+        <button class="tab-btn" onclick="switchTab('foda',this)">FODA</button>
+        <button class="tab-btn" onclick="switchTab('archivos-persona',this)">Archivos</button>
+      </div>
+
+      <!-- TAB BASICO -->
+      <div id="tab-basico" class="tab-content active">
+        <div style="display:flex;gap:1.5rem;flex-wrap:wrap;">
+          <div style="flex:1;min-width:200px;">
+            <div class="form-grid">
+              <div class="form-group"><label>Nombre completo</label><input type="text" id="f_nombre"></div>
+              <div class="form-group"><label>Tipo de documento</label>
+                <select id="f_tipo_doc"><option>DNI</option><option>CE</option><option>Pasaporte</option><option>RUC</option></select>
+              </div>
+              <div class="form-group"><label>Número de documento</label><input type="text" id="f_documento"></div>
+              <div class="form-group"><label>Fecha de nacimiento</label><input type="date" id="f_nacimiento"></div>
+              <div class="form-group"><label>Nacionalidad</label>
+                <select id="f_nacionalidad"><option>Peruana</option><option>Argentina</option><option>Boliviana</option><option>Brasileña</option><option>Chilena</option><option>Colombiana</option><option>Cubana</option><option>Dominicana</option><option>Ecuatoriana</option><option>Española</option><option>Estadounidense</option><option>Francesa</option><option>Guatemalteca</option><option>Haitiana</option><option>Hondureña</option><option>Italiana</option><option>Japonesa</option><option>Mexicana</option><option>Nicaragüense</option><option>Panameña</option><option>Paraguaya</option><option>Portuguesa</option><option>Puertorriqueña</option><option>Salvadoreña</option><option>Uruguaya</option><option>Venezolana</option><option>Otra</option></select>
+              </div>
+              <div class="form-group"><label>Nivel de estudio</label>
+                <select id="f_estudio"><option>Primaria</option><option>Secundaria</option><option>Técnico</option><option>Universitario</option><option>Postgrado</option><option>Maestría</option><option>Doctorado</option></select>
+              </div>
+            </div>
+          </div>
+          <div style="text-align:center;min-width:140px;">
+            <div style="width:130px;height:130px;border-radius:50%;border:2px dashed var(--border2);overflow:hidden;margin:0 auto .5rem;display:flex;align-items:center;justify-content:center;background:var(--bg3);cursor:pointer;position:relative;" onclick="document.getElementById('f_foto_input').click()">
+              <img id="f_foto_preview" style="width:100%;height:100%;object-fit:cover;display:none;">
+              <span id="f_foto_placeholder" style="color:var(--text3);font-size:.8rem;">Foto</span>
+            </div>
+            <input type="file" id="f_foto_input" accept="image/*" style="display:none" onchange="cargarFoto(event)">
+            <button class="btn btn-secondary" onclick="event.stopPropagation();document.getElementById('f_foto_input').value='';document.getElementById('f_foto_preview').style.display='none';document.getElementById('f_foto_placeholder').style.display='';document.getElementById('f_foto_data').value=''" style="font-size:.75rem;padding:.3rem .6rem;">Quitar foto</button>
+            <input type="hidden" id="f_foto_data">
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB LABORAL -->
+      <div id="tab-laboral" class="tab-content">
+        <div class="form-grid">
+          <div class="form-group"><label>Profesión / Ocupación</label><input type="text" id="f_profesion"></div>
+          <div class="form-group"><label>Nombre de la empresa</label><input type="text" id="f_empresa"></div>
+          <div class="form-group"><label>RUC de la empresa</label><input type="text" id="f_empresa_ruc"></div>
+          <div class="form-group"><label>Dirección de la empresa</label><input type="text" id="f_empresa_direccion"></div>
+          <div class="form-group"><label>Teléfono de la empresa</label><input type="text" id="f_empresa_telefono"></div>
+          <div class="form-group"><label>Sitio web</label><input type="text" id="f_empresa_web" placeholder="https://..."></div>
+          <div class="form-group"><label>Email de la empresa</label><input type="text" id="f_empresa_email"></div>
+          <div class="form-group"><label>Tiempo en la empresa</label><input type="text" id="f_tiempo_empresa" placeholder="Ej: 2 años, 6 meses"></div>
+          <div class="form-group full"><label>Cargo / Puesto</label><input type="text" id="f_cargo"></div>
+        </div>
+      </div>
+
+      <!-- TAB CONTACTO -->
+      <div id="tab-contacto" class="tab-content">
+        <div class="form-grid">
+          <div class="form-group"><label>Departamento</label><select id="f_departamento" onchange="cargarProvincias()"><option value="">Seleccionar...</option></select></div>
+          <div class="form-group"><label>Provincia</label><select id="f_provincia" onchange="cargarDistritos()"><option value="">Seleccionar...</option></select></div>
+          <div class="form-group"><label>Distrito</label><select id="f_distrito" onchange="cargarUrbanizaciones()"><option value="">Seleccionar...</option></select></div>
+          <div class="form-group" id="f_urbanizacion_group"><label>Urbanización</label>
+            <select id="f_urbanizacion" onchange="onUrbChange()"><option value="">Seleccionar...</option></select>
+            <input type="text" id="f_urbanizacion_otra" placeholder="Escribe la urbanización..." style="margin-top:.3rem;display:none;">
+          </div>
+          <div class="form-group full"><label>Dirección exacta</label><input type="text" id="f_direccion"></div>
+          <div class="form-group full"><label>Link de Google Maps</label><input type="text" id="f_gmaps" placeholder="https://maps.app.goo.gl/..."></div>
+          <div class="form-group"><label>Teléfono / Celular</label><input type="text" id="f_telefono"></div>
+          <div class="form-group"><label>Email</label><input type="email" id="f_email"></div>
+          <div class="form-group"><label>Facebook</label><input type="text" id="f_facebook"></div>
+          <div class="form-group"><label>Instagram</label><input type="text" id="f_instagram"></div>
+          <div class="form-group"><label>WhatsApp</label><input type="text" id="f_whatsapp"></div>
+          <div class="form-group"><label>Otra red social</label><input type="text" id="f_otra_red" placeholder="Ej: LinkedIn, TikTok..."></div>
+        </div>
+      </div>
+
+      <!-- TAB FAMILIA -->
+      <div id="tab-familia" class="tab-content">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">
+          <h3 style="color:#333;font-size:1rem;">Miembros de la familia</h3>
+          <button class="btn btn-success" onclick="agregarFamiliar()">+ Añadir</button>
+        </div>
+        <div id="familia-container"></div>
+      </div>
+
+      <!-- TAB FODA -->
+      <div id="tab-foda" class="tab-content">
+        <div class="foda-grid">
+          <div class="foda-item foda-f">
+            <h4>Fortalezas</h4>
+            <textarea id="f_fortalezas" placeholder="Fortalezas..." style="width:100%;min-height:100px;border:none;background:transparent;outline:none;resize:vertical;"></textarea>
+          </div>
+          <div class="foda-item foda-o">
+            <h4>Oportunidades</h4>
+            <textarea id="f_oportunidades" placeholder="Oportunidades..." style="width:100%;min-height:100px;border:none;background:transparent;outline:none;resize:vertical;"></textarea>
+          </div>
+          <div class="foda-item foda-d">
+            <h4>Debilidades</h4>
+            <textarea id="f_debilidades" placeholder="Debilidades..." style="width:100%;min-height:100px;border:none;background:transparent;outline:none;resize:vertical;"></textarea>
+          </div>
+          <div class="foda-item foda-a">
+            <h4>Amenazas</h4>
+            <textarea id="f_amenazas" placeholder="Amenazas..." style="width:100%;min-height:100px;border:none;background:transparent;outline:none;resize:vertical;"></textarea>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB ARCHIVOS POR PERSONA -->
+      <div id="tab-archivos-persona" class="tab-content">
+        <p style="margin-bottom:.5rem;color:#888;">Arrastra archivos aquí o haz clic para subirlos a esta persona.</p>
+        <div class="dropzone" id="dropzone-persona" onclick="document.getElementById('fileInput-persona').click()">
+          <div class="icon">📁</div>
+          <p>Seleccionar o arrastrar archivos</p>
+        </div>
+        <input type="file" id="fileInput-persona" multiple style="display:none" onchange="subirArchivosPersona(event)">
+        <div id="persona-files-grid" class="file-grid"></div>
+      </div>
+
+      <div class="form-actions">
+        <button class="btn btn-primary" onclick="guardarPersona()">Guardar</button>
+        <button class="btn btn-secondary" onclick="volverLista()">Cancelar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- SECCION ARCHIVOS -->
+  <div id="section-archivos" class="section">
+    <h2>Archivos</h2>
+    <div class="dropzone" id="dropzone-global" onclick="document.getElementById('fileInput-global').click()">
+      <div class="icon">📁</div>
+      <p>Seleccionar o arrastrar archivos para subir</p>
+    </div>
+    <input type="file" id="fileInput-global" multiple style="display:none" onchange="subirArchivosGlobal(event)">
+    <div class="search-bar" style="margin-top:1rem;">
+      <input type="text" id="searchArchivo" placeholder="Buscar archivos..." oninput="renderArchivos()">
+    </div>
+    <div id="archivos-grid" class="file-grid"></div>
+  </div>
+</div>
+
+<div id="ficha-modal" class="modal" style="display:none;">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h2 id="ficha-nombre"></h2>
+      <button class="modal-close" onclick="cerrarFicha()">&times;</button>
+    </div>
+    <div class="modal-body" id="ficha-body"></div>
+    <div class="modal-footer">
+      <button class="btn btn-primary" onclick="exportarFichaPDF()">📄 Exportar PDF</button>
+      <button class="btn btn-secondary" onclick="cerrarFicha()">Cerrar</button>
+    </div>
+  </div>
+</div>
+
+<div id="historial-modal" class="modal" style="display:none;">
+  <div class="modal-content" style="max-width:550px;">
+    <div class="modal-header">
+      <h2 id="historial-title">Historial de eventos</h2>
+      <button class="modal-close" onclick="cerrarHistorial()">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div style="display:flex;gap:.5rem;margin-bottom:1rem;">
+        <input type="date" id="historial-fecha" style="padding:.5rem;border:1.5px solid var(--border2);border-radius:var(--radius-sm);font-size:.85rem;background:var(--bg2);color:var(--text);">
+        <input type="text" id="historial-desc" placeholder="Descripción del evento..." style="flex:1;padding:.5rem;border:1.5px solid var(--border2);border-radius:var(--radius-sm);font-size:.85rem;background:var(--bg2);color:var(--text);" onkeydown="if(event.key==='Enter') agregarEvento()">
+        <button class="btn btn-primary" onclick="agregarEvento()">Añadir</button>
+      </div>
+      <div id="historial-lista"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="cerrarHistorial()">Cerrar</button>
+    </div>
+  </div>
+</div>
+
+<div id="export-modal" class="modal" style="display:none;">
+  <div class="modal-content" style="max-width:450px;">
+    <div class="modal-header">
+      <h2>Exportar datos</h2>
+      <button class="modal-close" onclick="cerrarExport()">&times;</button>
+    </div>
+    <div class="modal-body" style="text-align:center;">
+      <p style="color:#888;margin-bottom:1.5rem;">Selecciona el formato de exportación</p>
+      <div style="display:flex;flex-direction:column;gap:.75rem;">
+        <button class="btn btn-primary" onclick="exportarWeb()" style="padding:.8rem;font-size:1rem;">🌐 Exportar como Web (HTML)</button>
+        <button class="btn btn-primary" onclick="exportarPDF()" style="padding:.8rem;font-size:1rem;">📄 Exportar como PDF</button>
+        <button class="btn btn-primary" onclick="exportarCSV()" style="padding:.8rem;font-size:1rem;">📊 Exportar como CSV</button>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="cerrarExport()">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ============== DATOS ==============
+let personas = JSON.parse(localStorage.getItem('fs_personas') || '[]');
+let archivos = JSON.parse(localStorage.getItem('fs_archivos') || '[]');
+let nextPersonaId = parseInt(localStorage.getItem('fs_nextPersonaId') || '1');
+let nextArchivoId = parseInt(localStorage.getItem('fs_nextArchivoId') || '1');
+let familiaTemp = [];
+let currentFichaPersonaId = null;
+
+// ============== LOGIN ==============
+const USER = 'redjonas', PASS = 'almacen';
+function mostrarApp() {
+  document.getElementById('login-screen').classList.add('hidden');
+  document.getElementById('main-header').style.display = '';
+  document.getElementById('main-container').style.display = '';
+  aplicarTema();
+}
+function ocultarApp() {
+  document.getElementById('login-screen').classList.remove('hidden');
+  document.getElementById('main-header').style.display = 'none';
+  document.getElementById('main-container').style.display = 'none';
+}
+function login() {
+  const u = document.getElementById('login-user').value;
+  const p = document.getElementById('login-pass').value;
+  if (u === USER && p === PASS) {
+    localStorage.setItem('fs_logged', '1');
+    mostrarApp();
+  } else {
+    document.getElementById('login-error').style.display = '';
+  }
+}
+function logout() {
+  localStorage.removeItem('fs_logged');
+  ocultarApp();
+  document.getElementById('login-user').value = '';
+  document.getElementById('login-pass').value = '';
+  document.getElementById('login-error').style.display = 'none';
+}
+if (localStorage.getItem('fs_logged') === '1') mostrarApp();
+
+// ============== DATOS PERÚ ==============
+var PERU = {
+  Amazonas: { Bagua: ["Aramango","Bagua","Copallín","El Parco","Imaza","La Peca"], Bongará: ["Chisquilla","Churuja","Corosha","Cuispes","Florida","Jazán","Jumbilla","Recta","San Carlos","Shipasbamba","Valera","Yambrasbamba"], Chachapoyas: ["Asunción","Balsas","Chachapoyas","Cheto","Chiliquín","Chuquibamba","Granada","Huancas","La Jalca","Leimebamba","Levanto","Magdalena","Mariscal Castilla","Molinopampa","Montevideo","Olleros","Quinjalca","San Francisco de Daguas","San Isidro de Maino","Soloco","Sonche"], Condorcanqui: ["El Cenepa","Nieva","Río Santiago"], Luya: ["Camporredondo","Cocabamba","Colcamar","Conila","Inguilpata","Lámud","Longuita","Lonya Chico","Luya","Luya Viejo","María","Ocalli","Ocumal","Pisuquía","Providencia","San Cristóbal","San Francisco del Yeso","San Jerónimo","San Juan de Lopecancha","Santa Catalina","Santo Tomás","Tingo","Trita"], "Rodríguez de Mendoza": ["Chirimoto","Cochamal","Huambo","Limabamba","Longar","Mariscal Benavides","Milpuc","Omia","San Nicolás","Santa Rosa","Totora","Vista Alegre"], Utcubamba: ["Bagua Grande","Cajaruro","Cumba","El Milagro","Jamalca","Lonya Grande","Yamón"] },
+  Áncash: { Aija: ["Aija","Coris","Huacllán","La Merced","Succha"], "Antonio Raymondi": ["Aczo","Chaccho","Chingas","Llamellín","Mirgas","San Juan de Rontoy"], Asunción: ["Acochaca","Chacas"], Bolognesi: ["Abelardo Pardo Lezameta","Antonio Raymondi","Aquia","Cajacay","Canis","Chiquián","Colquioc","Huallanca","Huasta","Huayllacayán","La Primavera","Mangas","Pacllón","San Miguel de Corpanqui","Ticllos"], Carhuaz: ["Acopampa","Amashca","Anta","Ataquero","Carhuaz","Marcará","Pariahuanca","San Miguel de Aco","Shilla","Tinco","Yungar"], "Carlos Fermín Fitzcarrald": ["San Luis","San Nicolás","Yauya"], Casma: ["Buena Vista Alta","Casma","Comandante Noel","Yaután"], Corongo: ["Aco","Bambas","Corongo","Cusca","La Pampa","Yanac","Yupán"], Huaraz: ["Cochabamba","Colcabamba","Huanchay","Huaraz","Independencia","Jangas","La Libertad","Olleros","Pampas Grande","Pariacoto","Pira","Tarica"], Huari: ["Anra","Cajay","Chavín de Huántar","Huacachi","Huacchis","Huachis","Huántar","Huari","Masin","Paucas","Pontó","Rahuapampa","Rapayán","San Marcos","San Pedro de Chana","Uco"], Huarmey: ["Cochapeti","Culebras","Huarmey","Huayan","Malvas"], Huaylas: ["Caraz","Huallanca","Huata","Huaylas","Mato","Pamparomás","Pueblo Libre","Santa Cruz","Santo Toribio","Yuracmarca"], "Mariscal Luzuriaga": ["Casca","Eleazar Guzmán Barrón","Fidel Olivas Escudero","Llama","Llumpa","Lucma","Musga","Piscobamba"], Ocros: ["Acas","Cajamarquilla","Carhuapampa","Cochas","Congas","Llipa","Ocros","San Cristóbal de Raján","San Pedro","Santiago de Chilcas"], Pallasca: ["Bolognesi","Cabana","Conchucos","Huacaschuque","Huandoval","Lacabamba","Llapo","Pallasca","Pampas","Santa Rosa","Tauca"], Pomabamba: ["Huayllán","Parobamba","Pomabamba","Quinuabamba"], Recuay: ["Catac","Cotaparaqui","Huayllapampa","Llacllín","Marca","Pampas Chico","Pararín","Recuay","Tapacocha","Ticapampa"], Santa: ["Cáceres del Perú","Chimbote","Coishco","Macate","Moro","Nepeña","Nuevo Chimbote","Samanco","Santa"], Sihuas: ["Acobamba","Alfonso Ugarte","Cashapampa","Chingalpo","Huayllabamba","Quiches","Ragash","San Juan","Sicsibamba","Sihuas"], Yungay: ["Cascapara","Mancos","Matacoto","Quillo","Ranrahirca","Shupluy","Yanama","Yungay"] },
+  Apurímac: { Abancay: ["Abancay","Chacoche","Circa","Curahuasi","Huanipaca","Lambrama","Pichirhua","San Pedro de Cachora","Tamburco"], Andahuaylas: ["Andahuaylas","Andarapa","Chiara","Huancarama","Huancaray","Huayana","José María Arguedas","Kaquiabamba","Kishuara","Pacobamba","Pacucha","Pampachiri","Pomacocha","San Antonio de Cachi","San Jerónimo","San Miguel de Chaccrapampa","Santa María de Chicmo","Talavera","Tumay Huaraca","Turpo"], Antabamba: ["Antabamba","El Oro","Huaquirca","Juan Espinoza Medrano","Oropesa","Pachaconas","Sabaino"], Aymaraes: ["Capaya","Caraybamba","Chalhuanca","Chapimarca","Colcabamba","Cotaruse","Huayllo","Justo Apu Sahuaraura","Lucre","Pocohuanca","San Juan de Chacña","Sañayca","Soraya","Tapairihua","Tintay","Toraya","Yanaca"], Chincheros: ["Anco Huallo","Chincheros","Cocharcas","Huaccana","Ocobamba","Ongoy","Ranracancha","Rocchacc","Uranmarca"], Cotabambas: ["Challhuahuacho","Cotabambas","Coyllurqui","Haquira","Mara","Tambobamba"], Grau: ["Chuquibambilla","Curasco","Curpahuasi","Gamarra","Huayllati","Mamara","Micaela Bastidas","Pataypampa","Progreso","San Antonio","Santa Rosa","Turpay","Vilcabamba","Virundo"] },
+  Arequipa: { Arequipa: ["Alto Selva Alegre","Arequipa","Cayma","Cerro Colorado","Characato","Chiguata","Jacobo Hunter","José Luis Bustamante y Rivero","La Joya","Mariano Melgar","Miraflores","Mollebaya","Paucarpata","Pocsi","Polobaya","Quequeña","Sabandía","Sachaca","San Juan de Siguas","San Juan de Tarucani","Santa Isabel de Siguas","Santa Rita de Siguas","Socabaya","Tiabaya","Uchumayo","Vítor","Yanahuara","Yarabamba","Yura"], Camaná: ["Camaná","José María Quimper","Mariano Nicolás Valcárcel","Mariscal Cáceres","Nicolás de Piérola","Ocoña","Quilca","Samuel Pastor"], Caravelí: ["Acarí","Atico","Atiquipa","Bella Unión","Cahuacho","Caravelí","Chala","Chaparra","Huanuhuanu","Jaquí","Lomas","Quicacha","Yauca"], Castilla: ["Andagua","Aplao","Ayo","Chachas","Chilcaymarca","Choco","Huancarqui","Machaguay","Orcopampa","Pampacolca","Tipán","Uñón","Uraca","Viraco"], Caylloma: ["Achoma","Cabana","Callalli","Caylloma","Chivay","Coporaque","Huambo","Huanca","Ichupampa","Lari","Lluta","Maca","Madrigal","Majes","San Antonio de Chuca","Sibayo","Tapay","Tisco","Tuti","Yanque"], Condesuyos: ["Andaray","Cayarani","Chichas","Chuquibamba","Iray","Río Grande","Salamanca","Yanaquihua"], Islay: ["Cocachacra","Dean Valdivia","Islay","Mejía","Mollendo","Punta de Bombón"], "La Unión": ["Alca","Charcana","Cotahuasi","Huaynacotas","Pampamarca","Puyca","Quechualla","Sayla","Tauría","Tomepampa","Toro"] },
+  Ayacucho: { Cangallo: ["Cangallo","Chuschi","Los Morochucos","María Parado de Bellido","Paras","Totos"], Huamanga: ["Acocro","Acos Vinchos","Andrés Avelino Cáceres Dorregaray","Ayacucho","Carmen Alto","Chiara","Jesús Nazareno","Ocros","Pacaycasa","Quinua","San José de Ticllas","San Juan Bautista","Santiago de Pischa","Socos","Tambillo","Vinchos"], "Huanca Sancos": ["Carapo","Sacsamarca","Sancos","Santiago de Lucanamarca"], Huanta: ["Ayahuanco","Huamanguilla","Huanta","Iguain","Llochegua","Luricocha","Santillana","Sivia"], "La Mar": ["Anco","Ayna","Chilcas","Chungui","Luis Carranza","San Miguel","Santa Rosa","Samugari","Tambo"], Lucanas: ["Aucara","Cabana","Carmen Salcedo","Chaviña","Chipao","Huacuas","Laramate","Leoncio Prado","Lucanas","Llauta","Ococa","Ocro","Puquio","San Cristóbal","San Juan","San Pedro","San Pedro de Palco","Sancos","Santa Ana de Huaycahuacho","Santa Lucía"], Parinacochas: ["Chumpi","Coronel Castañeda","Pacapausa","Pullo","Puyusca","San Francisco de Ravacayco","Upahuacho"], "Páucar del Sara Sara": ["Colta","Corculla","Lampa","Marcabamba","Oyolo","Pararca","Pausa","San Javier de Alpabamba","San José de Ushua","Sara Sara"], Sucre: ["Belén","Chalcos","Chilcayoc","Huacaña","Morcolla","Paico","Querobamba","San Pedro de Larcay","San Salvador de Quije","Santiago de Paucaray","Soras"], "Víctor Fajardo": ["Alcamenca","Apongo","Asquipata","Canaria","Cayara","Colca","Huamanquiquia","Huancapi","Huancaraylla","Huaya","Sarhua","Vilcanchos"], "Vilcas Huamán": ["Accomarca","Carhuanca","Concepción","Huambalpa","Independencia","Saurama","Vilcas Huamán","Vischongo"] },
+  Cajamarca: { Cajabamba: ["Cachachi","Cajabamba","Condebamba","Sitacocha"], Cajamarca: ["Asunción","Cajamarca","Chetilla","Cospán","Encañada","Jesús","Llacanora","Los Baños del Inca","Magdalena","Matara","Namora","San Juan"], Celendín: ["Celendín","Chumuch","Cortegana","Huasmin","Jorge Chávez","José Gálvez","La Libertad de Pallán","Miguel Iglesias","Oxamarca","Sorochuco","Sucre","Utco"], Chota: ["Anguía","Chadín","Chalamarca","Chiguirip","Chimban","Choropampa","Chota","Cochabamba","Conchán","Huambos","Lajas","Llama","Miracosta","Paccha","Pión","Querocoto","San Juan de Licupis","Tacabamba","Tocmoche"], Contumazá: ["Chilete","Contumazá","Cupisnique","Guzmango","San Benito","Santa Cruz de Toledo","Tantarica","Yonán"], Cutervo: ["Callayuc","Choros","Cujillo","Cutervo","La Ramada","Pimpingos","Querocotillo","San Andrés de Cutervo","San Juan de Cutervo","San Luis de Lucma","Santa Cruz","Santo Domingo de la Capilla","Santo Tomás","Socota","Toribio Casanova"], Hualgayoc: ["Bambamarca","Chugur","Hualgayoc"], Jaén: ["Bellavista","Chontali","Colasay","Huabal","Jaén","Las Pirias","Pomahuaca","Pucará","Sallique","San Felipe","San José del Alto","Santa Rosa"], "San Ignacio": ["Chirinos","Huarango","La Coipa","Namballe","San Ignacio","San José de Lourdes","Tabaconas"], "San Marcos": ["Chancay","Eduardo Villanueva","Gregorio Pita","Ichocán","José Manuel Quiroz","José Sabogal","Miguel Iglesias","Pedro Gálvez"], "San Miguel": ["Bolívar","Calquis","Catilluc","El Prado","La Florida","Llapa","Nanchoc","Niepos","San Gregorio","San Miguel","San Silvestre de Cochán","Tongod","Unión Agua Blanca"], "San Pablo": ["San Bernardino","San Luis","San Pablo","Tumbadén"], "Santa Cruz": ["Andabamba","Catache","Chancaybaños","La Esperanza","Ninabamba","Pulán","Saucepampa","Sexi","Uticyacu","Yauyucán"] },
+  Callao: { Callao: ["Bellavista","Callao","Carmen de La Legua Reynoso","La Perla","La Punta","Mi Perú","Ventanilla"] },
+  Cusco: { Acomayo: ["Acomayo","Acopía","Acos","Mosoc Llacta","Pomacanchi","Rondocán","Sangarará"], Anta: ["Ancahuasi","Anta","Cachimayo","Chinchaypujio","Huarocondo","Limatambo","Mollepata","Pucyura","Surite","Zurite"], Calca: ["Calca","Coya","Lamay","Lares","Pisac","San Salvador","Taray","Yanatile"], Canas: ["Checca","Kunturkanki","Langui","Layo","Pampamarca","Quehue","Túpac Amaru","Yanaoca"], Canchis: ["Checacupe","Combapata","Marangani","Pitumarca","San Pablo","San Pedro","Sicuani","Tinta"], Chumbivilcas: ["Capacmarca","Chamaca","Colquemarca","Livitaca","Llusco","Quiñota","Santo Tomás","Velille"], Cusco: ["Ccorca","Cusco","Poroy","San Jerónimo","San Sebastián","Santiago","Saylla","Wánchaq"], Espinar: ["Alto Pichigua","Condoroma","Coporaque","Espinar","Ocoruro","Pallpata","Pichigua","Suyckutambo"], "La Convención": ["Echarate","Huayopata","Inkawasi","Kimbiri","Maranura","Megantoni","Ocobamba","Pichari","Quellouno","Santa Ana","Santa Teresa","Vilcabamba"], Paruro: ["Accha","Ccapi","Colcha","Huanoquite","Omacha","Paccaritambo","Paruro","Pillpinto","Yaurisque"], Paucartambo: ["Caicay","Challabamba","Colquepata","Huancarani","Kosñipata","Paucartambo"], Quispicanchi: ["Andahuaylillas","Camanti","Ccarhuayo","Ccatca","Cusipata","Huaro","Lucre","Marcapata","Ocongate","Oropesa","Quiquijana","Urcos"], Urubamba: ["Chinchero","Huayllabamba","Machupicchu","Maras","Ollantaytambo","Urubamba","Yucay"] },
+  Huancavelica: { Acobamba: ["Acobamba","Andabamba","Anta","Caja","Marcas","Paucará","Pomacocha","Rosario"], Angaraes: ["Anchonga","Callanmarca","Ccochaccasa","Chincho","Congalla","Huanca Huanca","Huayllay Grande","Julcamarca","Lircay","San Antonio de Antaparco","Santo Tomás de Pata","Secclla"], Castrovirreyna: ["Arma","Aurahua","Capillas","Castrovirreyna","Chupamarca","Cocas","Huachos","Huamatambo","Mollepampa","San Juan","Santa Ana","Tantara","Ticrapo"], Churcampa: ["Anco","Chinchihuasi","Churcampa","Cosme","El Carmen","La Merced","Locroja","Pachamarca","Paucarbamba","San Miguel de Mayocc","San Pedro de Coris"], Huancavelica: ["Acobambilla","Acoria","Ascensión","Conayca","Cuenca","Huachocolpa","Huancavelica","Huando","Huayllahuara","Izcuchaca","Laria","Manta","Mariscal Cáceres","Moya","Nuevo Occoro","Palca","Pilchaca","Vilca","Yauli"], Huaytará: ["Ayaví","Córdova","Huayacundo Arma","Huaytará","Laramarca","Ocoyo","Pilpichaca","Querco","Quito Arma","San Antonio de Cusicancha","San Francisco de Sangayaico","San Isidro","Santiago de Chocorvos","Santiago de Quirahuara","Santo Domingo de Capillas","Tambo"], Tayacaja: ["Acostambo","Acraquia","Ahuaycha","Andaymarca","Colcabamba","Cochabamba","Huaribamba","Ñahuimpuquio","Pampas","Pazos","Quishuar","Roble","Salcabamba","Salcahuasi","San Marcos de Rocchac","Surcubamba","Tintay Puncu"] },
+  Huánuco: { Ambosis: ["Ambosis","Cochabamba","Colpas","Conchamarca","Huántar","San Francisco","San Rafael","Tomayquichua"], "Dos de Mayo": ["Chuquis","La Unión","Marías","Pachas","Quivilla","Ripán","Shunqui","Sillapata","Yanas"], Huacaybamba: ["Canchabamba","Cochabamba","Huacaybamba","Maracobamba","Pinra"], Huamalíes: ["Arancay","Chavín de Pariarca","Jacas Grande","Jircan","Llata","Miraflores","Monzón","Punchao","Puños","Singa","Tantamayo"], Huánuco: ["Amarilis","Chinchao","Churubamba","Huánuco","Margos","Quisqui","San Francisco de Cayrán","San Pedro de Chaulán","Santa María del Valle","Yacus","Yarumayo"], Lauricocha: ["Baños","Jesús","Jivia","Queropalca","Rondos","San Francisco de Asís","San Miguel de Cauri"], "Leoncio Prado": ["Castillo Grande","Daniel Alomía Robles","Hermilio Valdizán","José Crespo y Castillo","Luyando","Mariano Damaso Beraún","Rupa Rupa","Santo Domingo de Anda"], Marañón: ["Cholón","Huacrachuco","San Buenaventura"], Pachitea: ["Chaglla","Molino","Panao","Umari"], "Puerto Inca": ["Codo del Pozuzo","Honoria","Puerto Inca","Tournavista","Yuyapichis"], Yarowilca: ["Aparicio Pomares","Cahuac","Chacabamba","Chavinillo","Choras","Jacas Chico","Obas","Pampamarca"] },
+  Ica: { Chincha: ["Alto Larán","Chavín","Chincha Alta","Chincha Baja","El Carmen","Grocio Prado","Pueblo Nuevo","San Juan de Yanac","San Pedro de Huacarpana","Sunampe","Tambo de Mora"], Ica: ["Ica","La Tinguiña","Los Aquijes","Ocucaje","Pachacutec","Parcona","Pueblo Nuevo","Salas","San José de Los Molinos","San Juan Bautista","Santiago","Subtanjalla","Tate","Yauca del Rosario"], Nazca: ["Changuillo","El Ingenio","Marcona","Nazca","Vista Alegre"], Palpa: ["Llipata","Palpa","Río Grande","Santa Cruz","Tibillo"] },
+  Junín: { Chanchamayo: ["Chanchamayo","Perené","Pichanaqui","San Luis de Shuaro","San Ramón","Vitoc"], Chupaca: ["Ahuac","Chongos Bajo","Chupaca","Huachac","Huamancaca Chico","San Juan de Iscos","San Juan de Jarpa","Tres de Diciembre","Yanacancha"], Concepción: ["Aco","Andamarca","Chambara","Cochas","Comas","Concepción","Heroínas Toledo","Manzanares","Mariscal Castilla","Matahuasi","Mito","Nueve de Julio","Orcotuna","San José de Quero","Santa Rosa de Ocopa"], Huancayo: ["Carhuacallanga","Chacapampa","Chicche","Chilca","Chongos Alto","Chupuro","Colca","Cullhuas","El Tambo","Huacrapuquio","Hualhuas","Huancán","Huancayo","Huasicancha","Huayucachi","Ingenio","Pariahuanca","Pilcomayo","Pucará","Quichuay","Quilcas","San Agustín","San Jerónimo de Tunán","Santo Domingo de los Olleros","Saño","Sapallanga","Sicaya","Viques"], Jauja: ["Acolla","Apata","Ataura","Canchayllo","Curicaca","El Mantaro","Huamalí","Huaripampa","Huertas","Janjaillo","Jauja","Julcán","Leonor Ordóñez","Llocllapampa","Marco","Masma","Masma Chicche","Molinos","Monobamba","Muqui","Muquiyauyo","Paca","Paccha","Pancán","Parco","Pomacancha","Ricrán","San Lorenzo","San Pedro de Chunán","Sincos","Tunanmarca","Yauli","Yauyos"], Junín: ["Carhuamayo","Junín","Ondores","Ulcumayo"], Satipo: ["Coviriali","Llaylla","Mazamari","Pampa Hermosa","Pangoa","Río Negro","Río Tambo","Satipo"], Tarma: ["Acobamba","Huaricolca","Huasahuasi","La Unión","Palca","Palcamayo","San Pedro de Cajas","Tapo","Tarma"], Yauli: ["Chacapalpa","Huayhuay","La Oroya","Marcapomacocha","Morococha","Paccha","Santa Bárbara de Carhuacayan","Santa Rosa de Sacco","Suitucancha","Yauli"] },
+  "La Libertad": { Ascope: ["Ascope","Casa Grande","Chicama","Chocope","Magdalena de Cao","Paiján","Rázuri","Santiago de Cao"], Bolívar: ["Bambamarca","Bolívar","Condormarca","Longotea","Ucuncha","Uchumarca"], Chepén: ["Chepén","Pacanga","Pueblo Nuevo"], "Gran Chimú": ["Cascas","Marmot","Sayapullo"], Julcán: ["Calamarca","Carabamba","Huaso","Julcán"], Otuzco: ["Agallpampa","Charat","Huaranchal","La Cuesta","Mache","Otuzco","Paranday","Salpo","Sinsicap","Usquil"], Pacasmayo: ["Guadalupe","Jequetepeque","Pacasmayo","San José","San Pedro de Lloc"], Pataz: ["Buldibuyo","Chillia","Huancaspata","Huaylillas","Huayo","Ongón","Parcoy","Pataz","Pías","Santiago de Challas","Taurija","Tayabamba","Urpay"], "Sánchez Carrión": ["Chugay","Cochorco","Curgos","Huamachuco","Marcabal","Sanagorán","Sarín","Sartimbamba"], "Santiago de Chuco": ["Angasmarca","Cachicadán","Mollebamba","Mollepata","Quiruvilca","Santa Cruz de Chuca","Santiago de Chuco","Sitabamba"], Trujillo: ["El Porvenir","Florencia de Mora","Huanchaco","La Esperanza","Laredo","Moche","Poroto","Salaverry","Simbal","Trujillo","Víctor Larco Herrera"], Virú: ["Chao","Guadalupito","Virú"] },
+  Lambayeque: { Chiclayo: ["Cayaltí","Chiclayo","Chongoyape","Eten","Eten Puerto","José Leonardo Ortiz","La Victoria","Lagunas","Monsefú","Nueva Arica","Oyotún","Pátapo","Picsi","Pimentel","Pomalca","Pucalá","Puerto Eten","Reque","Santa Rosa","Saña","Tumán"], Ferreñafe: ["Cañaris","Ferreñafe","Inkawasi","Manuel Antonio Mesones Muro","Pítipo","Pueblo Nuevo"], Lambayeque: ["Chóchope","Íllimo","Jayanca","Lambayeque","Mochumí","Mórrope","Motupe","Olmos","Pacora","Salas","San José","Túcume"] },
+  Lima: { Barranca: ["Barranca","Paramonga","Pativilca","Supe","Supe Puerto"], Cajatambo: ["Cajatambo","Copa","Gorgor","Huancapón","Manás"], Cañete: ["Asia","Calango","Cerro Azul","Chilca","Coayllo","Imperial","Lunahuaná","Mala","Nuevo Imperial","Pacarán","Quilmaná","San Antonio","San Luis","San Vicente de Cañete","Santa Cruz de Flores","Zúñiga"], Canta: ["Arahuay","Canta","Huamantanga","Huaros","Lachaqui","San Buenaventura","Santa Rosa de Quives"], Huaral: ["27 de Noviembre","Atavillos Alto","Atavillos Bajo","Aucallama","Chancay","Huaral","Ihuarí","Lampián","Pacaraos","San Miguel de Acos","Santa Cruz de Andamarca","Sumbilca"], Huarochirí: ["Antioquia","Callahuanca","Carampoma","Chicla","Cuenca","Huachupampa","Huanza","Huarochirí","Lahuaytambo","Langa","Laraos","Mariatana","Matucana","Ricardo Palma","San Andrés de Tupicocha","San Antonio","San Bartolomé","San Damián","San Juan de Iris","San Juan de Tantaranche","San Lorenzo de Quinti","San Mateo","San Mateo de Otao","San Pedro de Casta","San Pedro de Huancayre","Sangallaya","Santa Cruz de Cocachacra","Santa Eulalia","Santiago de Anchucaya","Santiago de Tuna","Santo Domingo de los Olleros","Surco"], Huaura: ["Ámbar","Caleta de Carquín","Checras","Huacho","Hualmay","Huaura","Leoncio Prado","Paccho","Santa Leonor","Santa María","Sayán","Vegueta"], Lima: ["Ancón","Ate","Barranco","Breña","Carabayllo","Chaclacayo","Chorrillos","Cieneguilla","Comas","El Agustino","Independencia","Jesús María","La Molina","La Victoria","Lima","Lince","Los Olivos","Lurigancho","Lurín","Magdalena del Mar","Miraflores","Pachacámac","Pucusana","Pueblo Libre","Puente Piedra","Punta Hermosa","Punta Negra","Rímac","San Bartolo","San Borja","San Isidro","San Juan de Lurigancho","San Juan de Miraflores","San Luis","San Martín de Porres","San Miguel","Santa Anita","Santa María del Mar","Santa Rosa","Santiago de Surco","Surquillo","Villa El Salvador","Villa María del Triunfo"], Oyón: ["Andajes","Caujul","Cochamarca","Naván","Oyón","Pachangara"], Yauyos: ["Alis","Allauca","Ayaviri","Azángaro","Cacra","Carania","Catahuasi","Chocos","Cochas","Colonia","Hongos","Huampará","Huancaya","Huañec","Huangáscar","Huantán","Laraos","Lincha","Madeán","Miraflores","Omas","Putinza","Quinches","Quinocay","San Joaquín","San Pedro de Pilas","Tanta","Tauripampa","Tomas","Tupe","Viñac","Vitis","Yauyos"] },
+  Loreto: { "Alto Amazonas": ["Balsapuerto","Jeberos","Lagunas","Santa Cruz","Teniente César López Rojas","Yurimaguas"], "Datem del Marañón": ["Andoas","Barranca","Cahuapanas","Manseriche","Morona","Pastaza"], Loreto: ["Nauta","Parinari","Tigre","Trompeteros","Urarinas"], "Mariscal Ramón Castilla": ["Pebas","Ramón Castilla","San Pablo","Yavarí"], Maynas: ["Alto Nanay","Belén","Fernando Lores","Iquitos","Indiana","Las Amazonas","Mazán","Napo","Punchana","Putumayo","San Juan Bautista","Torres Causana"], Requena: ["Alto Tapiche","Capelo","Emilio San Martín","Jenaro Herrera","Maquía","Puinahua","Requena","Saquena","Soplin","Tapiche","Yaquerana"] },
+  "Madre de Dios": { Manu: ["Fitzcarrald","Huepetuhe","Madre de Dios","Manu"], Tahuamanu: ["Iberia","Iñapari","Tahuamanu"], Tambopata: ["Inambari","Laberinto","Las Piedras","Tambopata"] },
+  Moquegua: { "General Sánchez Cerro": ["Chojata","Coalaque","Ichuña","La Capilla","Lloque","Matalaque","Omate","Puquina","Quinistaquillas","Ubinas","Yunga"], Ilo: ["El Algarrobal","Ilo","Pacocha"], "Mariscal Nieto": ["Carumas","Cuchumbaya","Moquegua","Samegua","San Cristóbal","Torata"] },
+  Pasco: { "Daniel Alcides Carrión": ["Chacayán","Goyllarisquizga","Paucar","San Pedro de Pillao","Santa Ana de Tusi","Tapuc","Vilcabamba","Yanahuanca"], Oxapampa: ["Chontabamba","Constitución","Huancabamba","Oxapampa","Palcazú","Pozuzo","Puerto Bermúdez","Villa Rica"], Pasco: ["Chaupimarca","Huachón","Huariaca","Huayllay","Ninacaca","Pallanchacra","Paucartambo","San Francisco de Asís de Yarusyacán","Simón Bolívar","Ticlacayán","Tinyahuarco","Vicco","Yanacancha"] },
+  Piura: { Ayabaca: ["Ayabaca","Frías","Jililí","Lagunas","Montero","Pacaipampa","Sapillica","Sicchez","Suyo"], Huancabamba: ["Canchaque","El Carmen de la Frontera","Huancabamba","Huarmaca","Lalaquiz","San Miguel de El Faique","Sóndor","Sondorillo"], Morropón: ["Buenos Aires","Chalaco","Chulucanas","La Matanza","Morropón","Salitral","San Juan de Bigote","Santa Catalina de Mossa","Santo Domingo","Yamango"], Paita: ["Amotape","Colán","El Arenal","La Huaca","Paita","Tamarindo","Vichayal"], Piura: ["Castilla","Catacaos","Cura Mori","El Tallán","La Arena","La Unión","Las Lomas","Piura","Tambogrande","Veintiséis de Octubre"], Sechura: ["Bellavista de la Unión","Bernal","Cristo Nos Valga","La Brea","Rinconada Llicuar","Sechura","Vice"], Sullana: ["Bellavista","Ignacio Escudero","Lancones","Marcavelica","Miguel Checa","Querecotillo","Salitral","Sullana"], Talara: ["El Alto","La Brea","Lobitos","Los Órganos","Máncora","Pariñas","Talara"] },
+  Puno: { Azángaro: ["Achaya","Arapa","Asillo","Azángaro","Caminaca","Chupa","José Domingo Choquehuanca","Muñani","Potoni","Samán","San Antón","San José","San Juan de Salinas","Santiago de Pupuja","Tirapata"], Carabaya: ["Ajoyani","Ayapata","Coasa","Corani","Crucero","Ituata","Macusani","Ollachea","San Gabán","Usicayos"], Chucuito: ["Desaguadero","Huacullani","Juli","Kelluyo","Pisacoma","Pomata","Zepita"], "El Collao": ["Capazo","Conduriri","Ilave","Pilcuyo","Santa Rosa"], Huancané: ["Cojata","Huancané","Huatasani","Inchupalla","Pusi","Rosaspata","Taraco","Vilque Chico"], Lampa: ["Cabanilla","Calapuja","Lampa","Nicasio","Ocuviri","Palca","Paratía","Pucará","Santa Lucía","Vilavila"], Melgar: ["Antauta","Ayaviri","Cupi","Llalli","Macari","Nuñoa","Orurillo","Santa Rosa","Umachiri"], Moho: ["Conima","Huayrapata","Moho","Tilali"], Puno: ["Ácora","Amantaní","Atuncolla","Capachica","Chucuito","Coata","Huata","Mañazo","Paucarcolla","Pichacani","Platería","Puno","San Antonio","Tiquillaca","Vilque"], "San Antonio de Putina": ["Ananea","Pedro Vilca Apaza","Putina","Quilcapuncu","Sina"], Sandia: ["Alto Inambari","Cuyocuyo","Limbani","Patambuco","Phara","Quiaca","San Juan del Oro","San Pedro de Putina Punco","Sandia","Yanahuaya"], "San Román": ["Cabana","Cabanillas","Caracoto","Juliaca","San Miguel"], Yunguyo: ["Copani","Cuturapi","Ollaraya","Tinicachi","Unicachi","Yunguyo"] },
+  "San Martín": { Bellavista: ["Alto Biavo","Bajo Biavo","Bellavista","Huallaga","San Pablo","San Rafael"], "El Dorado": ["Agua Blanca","San José de Sisa","San Martín","Santa Rosa","Shatoja"], Huallaga: ["Alto Saposoa","El Eslabón","Piscoyacu","Sacanche","Saposoa","Tingo de Saposoa"], Lamas: ["Alonso de Alvarado","Barranquita","Caynarachi","Cuñumbuqui","Lamas","Pinto Recodo","Rumisapa","San Roque de Cumbaza","Shanao","Tabalosos","Zapatero"], "Mariscal Cáceres": ["Campanilla","Huicungo","Juanjuí","Pachiza","Pajarillo"], Moyobamba: ["Calzada","Habana","Jepelacio","Moyobamba","Soritor","Yantaló"], Picota: ["Buenos Aires","Caspisapa","Picota","Pilluana","Pucacaca","San Cristóbal","San Hilarión","Shamboyacu","Tingo de Ponasa","Tres Unidos"], Rioja: ["Awajún","Elías Soplin Vargas","Nueva Cajamarca","Pardo Miguel","Rioja","San Fernando","Yorongos","Yuracyacu"], "San Martín": ["Alberto Leveau","Cacatachi","Chazuta","Chipurana","El Porvenir","Huimbayoc","Juan Guerra","La Banda de Shilcayo","Morales","Papaplaya","San Antonio","San Martín","Sauce","Shapaja","Tarapoto"], Tocache: ["Nuevo Progreso","Pólvora","Shunte","Tocache","Uchiza"] },
+  Tacna: { Candarave: ["Cairani","Camilaca","Candarave","Curibaya","Huanuara","Quilahuani"], "Jorge Basadre": ["Ilabaya","Ite","Locumba"], Tacna: ["Alto de la Alianza","Calana","Ciudad Nueva","Coronel Gregorio Albarracín Lanchipa","Inclán","La Yarada Los Palos","Pachía","Palca","Pocollay","Sama","Tacna"] },
+  Tumbes: { "Contralmirante Villar": ["Casitas","Zorritos"], Tumbes: ["Corrales","La Cruz","Pampas de Hospital","San Jacinto","San Juan de la Virgen","Tumbes"], Zarumilla: ["Aguas Verdes","Matapalo","Papayal","Zarumilla"] },
+  Ucayali: { Atalaya: ["Raymondi","Sepahua","Tahuanía","Yurúa"], "Coronel Portillo": ["Callería","Campoverde","Iparía","Manantay","Masisea","Nueva Requena","Yarinacocha"], "Padre Abad": ["Curimaná","Irazola","Padre Abad"], Purús: ["Purús"] }
+};
+var URB = {
+  "Lima-Lima-Miraflores": ["Urb. Aurora","Urb. Benavides","Urb. California","Urb. La Aurora","Urb. Leuro","Urb. Los Rosales","Urb. Miraflores","Urb. Monte Rico","Urb. San Antonio","Urb. San Carlos","Urb. San Eugenio","Urb. San Isidro","Urb. Santa Cruz","Urb. Santa Fe","Urb. Tejada"],
+  "Lima-Lima-San Isidro": ["Urb. Corpac","Urb. El Pacífico","Urb. El Rosario","Urb. La Calera","Urb. Las Casuarinas","Urb. Limatambo","Urb. Los Sauces","Urb. Orrantia","Urb. Pando","Urb. San Isidro","Urb. Santa Isabel"],
+  "Lima-Lima-Santiago de Surco": ["Urb. Chama","Urb. Higuereta","Urb. La Castellana","Urb. La Florida","Urb. Las Gardenias","Urb. Monterrico","Urb. Prolongación Benavides","Urb. San Ignacio de Monterrico","Urb. Santa Constanza","Urb. Santo Domingo","Urb. Sindicato","Urb. Villa Alegre"],
+  "Lima-Lima-San Borja": ["Urb. Córpac","Urb. Las Lilas","Urb. Los Parrales","Urb. Monterrico Norte","Urb. San Borja","Urb. San Felipe","Urb. Santa Patricia"],
+  "Lima-Lima-La Molina": ["Urb. La Molina","Urb. Los Álamos","Urb. Los Frutales","Urb. Mayorsazgo","Urb. Musha","Urb. Rinconada Alta","Urb. Rinconada Baja","Urb. Santa Felicia","Urb. Sol de La Molina"],
+  "Lima-Lima-San Miguel": ["Urb. Altura","Urb. Ciudad Universitaria","Urb. La Aurora","Urb. Maranga","Urb. Pando","Urb. San Miguelito"],
+  "Lima-Lima-Pueblo Libre": ["Urb. América","Urb. El Carmen","Urb. La Cabaña","Urb. Las Magnolias","Urb. Los Ángeles","Urb. Tawantinsuyo"],
+  "Lima-Lima-Jesús María": ["Urb. El Palomar","Urb. Jesús María","Urb. La Florida","Urb. Las Quintanas","Urb. Los Precursores","Urb. San Felipe","Urb. Santa Catalina"],
+  "Lima-Lima-Lince": ["Urb. La Castellana","Urb. La Victoria","Urb. Lince","Urb. San Alberto","Urb. San Isidro"],
+  "Lima-Lima-San Juan de Lurigancho": ["Urb. Canto Grande","Urb. Caja de Agua","Urb. Campoy","Urb. Mangomarca","Urb. San Fernando","Urb. San Juan","Urb. Santa María","Urb. Zárate"],
+  "Lima-Lima-Los Olivos": ["Urb. Capanina","Urb. Covida","Urb. El Trébol","Urb. Las Palmeras","Urb. Los Olivos","Urb. Pro","Urb. San Elías","Urb. Sol de Oro","Urb. Villa del Norte"],
+  "Lima-Lima-Comas": ["Urb. Collique","Urb. La Pascana","Urb. Los Ángeles","Urb. San Agustín","Urb. San Felipe","Urb. Santa Luzmila","Urb. Villa Hermosa"],
+  "Lima-Lima-Independencia": ["Urb. El Ermitaño","Urb. Independencia","Urb. La Unión","Urb. Los Jardines","Urb. Payet","Urb. Túpac Amaru"],
+  "Lima-Lima-Ate": ["Urb. 3 de Octubre","Urb. Ceres","Urb. Las Viñas","Urb. Mayorazgo","Urb. Santa Clara","Urb. Vitarte"],
+  "Lima-Lima-Barranco": ["Urb. Barranco","Urb. Chocavento","Urb. La Victoria","Urb. Malecón"],
+  "Lima-Lima-Chorrillos": ["Urb. Benito Juárez","Urb. Chorrillos","Urb. La Campiña","Urb. Manuela Sáenz","Urb. San Francisco","Urb. Villa"],
+  "Lima-Lima-San Juan de Miraflores": ["Urb. Ciudad de Dios","Urb. José Gálvez","Urb. Motupe","Urb. San Germán","Urb. Villa María"],
+  "Lima-Callao-Callao": ["Urb. Chimú","Urb. Dulanto","Urb. Gambeta","Urb. Industrial","Urb. La Chalaca","Urb. Las Fresas","Urb. Los Olivos","Urb. Puerto","Urb. San José","Urb. Sarita Colonia","Urb. Sesquicentenario"],
+  "Lima-Callao-Ventanilla": ["Urb. Antonia Moreno de Cáceres","Urb. Ciudad Satélite","Urb. Los Alisos","Urb. Ventanilla","Urb. Villa Los Reyes"],
+  "Arequipa-Arequipa-Arequipa": ["Urb. Álvarez Thomas","Urb. Culina","Urb. El Indio","Urb. La Paz","Urb. La Pampilla","Urb. Los Olivos","Urb. Manuel Prado","Urb. Quinta Salinas","Urb. San Isidro","Urb. Selva Alegre"],
+  "Arequipa-Arequipa-Cayma": ["Urb. Cayma","Urb. La Tomilla","Urb. Villa Hermosa"],
+  "Arequipa-Arequipa-Yanahuara": ["Urb. La Alborada","Urb. Libertad","Urb. Santa Marta","Urb. Tahuaycani"],
+  "La Libertad-Trujillo-Trujillo": ["Urb. California","Urb. El Bosque","Urb. El Recreo","Urb. La Merced","Urb. Las Quintanas","Urb. Los Ángeles","Urb. Miraflores","Urb. Palermo","Urb. Primavera","Urb. San Andrés","Urb. San Isidro","Urb. Santa Ana","Urb. Santa Inés"],
+  "La Libertad-Trujillo-La Esperanza": ["Urb. Alto Trujillo","Urb. La Esperanza","Urb. Los Jardines","Urb. Víctor Raúl"],
+  "La Libertad-Trujillo-Víctor Larco Herrera": ["Urb. Aranjuez","Urb. Buenos Aires","Urb. Las Flores","Urb. Los Cedros","Urb. San Andrés","Urb. Vista Hermosa"],
+  "Piura-Piura-Piura": ["Urb. Angamos","Urb. El Bosque","Urb. El Chipe","Urb. Ignacio Merino","Urb. Jorge Chávez","Urb. La Unión","Urb. Los Cocos","Urb. Miraflores","Urb. San Eduardo","Urb. Santa Isabel"],
+  "Cusco-Cusco-Cusco": ["Urb. El Bosque","Urb. El Polo","Urb. La Florida","Urb. Magisterio","Urb. Manuel Prado","Urb. Santa Mónica","Urb. Ttio"],
+  "Cusco-Cusco-San Sebastián": ["Urb. Belén","Urb. Ccapacmarca","Urb. El Sol","Urb. Progreso","Urb. San Sebastián","Urb. Zarzuela"],
+  "Lambayeque-Chiclayo-Chiclayo": ["Urb. El Carmen","Urb. La Florida","Urb. Las Américas","Urb. Los Sauces","Urb. Pata de Gallo","Urb. San Antonio","Urb. San Eduardo","Urb. Santa Victoria"],
+  "Lambayeque-Chiclayo-José Leonardo Ortiz": ["Urb. 10 de Octubre","Urb. El Bosque","Urb. José Leonardo Ortiz","Urb. San Carlos"],
+  "Lambayeque-Chiclayo-La Victoria": ["Urb. La Victoria","Urb. San Martín"],
+  "Junín-Huancayo-El Tambo": ["Urb. Aliso","Urb. Chamisería","Urb. Coto","Urb. El Tambo","Urb. La Florida","Urb. Los Amautas","Urb. San Antonio","Urb. San Carlos"],
+  "Junín-Huancayo-Huancayo": ["Urb. Cerro de Pasco","Urb. Champagnat","Urb. La Esperanza","Urb. Los Andes","Urb. Pilcomayo","Urb. San Lorenzo"]
+};
+function cargarProvincias() {
+  var d = document.getElementById('f_departamento').value;
+  var sel = document.getElementById('f_provincia');
+  sel.innerHTML = '<option value="">Seleccionar...</option>';
+  document.getElementById('f_distrito').innerHTML = '<option value="">Seleccionar...</option>';
+  document.getElementById('f_urbanizacion').innerHTML = '<option value="">Seleccionar...</option>';
+  document.getElementById('f_urbanizacion_otra').style.display = 'none';
+  if (!d || !PERU[d]) return;
+  var provs = Object.keys(PERU[d]);
+  for (var i = 0; i < provs.length; i++) {
+    sel.innerHTML += '<option value="' + provs[i] + '">' + provs[i] + '</option>';
+  }
+}
+function cargarDistritos() {
+  var d = document.getElementById('f_departamento').value;
+  var p = document.getElementById('f_provincia').value;
+  var sel = document.getElementById('f_distrito');
+  sel.innerHTML = '<option value="">Seleccionar...</option>';
+  document.getElementById('f_urbanizacion').innerHTML = '<option value="">Seleccionar...</option>';
+  document.getElementById('f_urbanizacion_otra').style.display = 'none';
+  if (!d || !p || !PERU[d] || !PERU[d][p]) return;
+  var dists = PERU[d][p];
+  for (var i = 0; i < dists.length; i++) {
+    sel.innerHTML += '<option value="' + dists[i] + '">' + dists[i] + '</option>';
+  }
+}
+function cargarUrbanizaciones() {
+  var d = document.getElementById('f_departamento').value;
+  var p = document.getElementById('f_provincia').value;
+  var di = document.getElementById('f_distrito').value;
+  var sel = document.getElementById('f_urbanizacion');
+  sel.innerHTML = '<option value="">Seleccionar...</option>';
+  document.getElementById('f_urbanizacion_otra').style.display = 'none';
+  var key = d + '-' + p + '-' + di;
+  var list = URB[key] || [];
+  for (var i = 0; i < list.length; i++) {
+    sel.innerHTML += '<option value="' + list[i] + '">' + list[i] + '</option>';
+  }
+  sel.innerHTML += '<option value="__otra__">Otra...</option>';
+}
+function onUrbChange() {
+  var s = document.getElementById('f_urbanizacion').value;
+  document.getElementById('f_urbanizacion_otra').style.display = s === '__otra__' ? '' : 'none';
+}
+function getUrbanizacion() {
+  var s = document.getElementById('f_urbanizacion');
+  if (s.value === '__otra__') return document.getElementById('f_urbanizacion_otra').value.trim();
+  return s.value;
+}
+
+// ============== NAVEGACIÓN ==============
+function showSection(name) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
+  document.getElementById('section-' + name).classList.add('active');
+  document.querySelector(`nav button:nth-child(${name==='personas'?1:2})`).classList.add('active');
+  if (name === 'archivos') renderArchivos();
+}
+
+// ============== CRUD PERSONAS ==============
+function nuevaPersona() {
+  document.getElementById('editId').value = '';
+  document.getElementById('persona-detail-title').textContent = 'Nueva Persona';
+  document.getElementById('persona-list-view').style.display = 'none';
+  document.getElementById('persona-detail-view').classList.add('active');
+  limpiarFormPersona();
+  familiaTemp = [];
+  renderFamilia();
+  switchTab('basico', document.querySelector('.tab-btn'));
+}
+
+function editarPersona(id) {
+  const p = personas.find(x => x.id === id);
+  if (!p) return;
+  document.getElementById('editId').value = id;
+  document.getElementById('persona-detail-title').textContent = 'Editar Persona';
+  document.getElementById('persona-list-view').style.display = 'none';
+  document.getElementById('persona-detail-view').classList.add('active');
+  document.getElementById('f_nombre').value = p.nombre || '';
+  document.getElementById('f_tipo_doc').value = p.tipo_doc || 'DNI';
+  document.getElementById('f_documento').value = p.documento || '';
+  document.getElementById('f_nacimiento').value = p.nacimiento || '';
+  document.getElementById('f_nacionalidad').value = p.nacionalidad || 'Peruana';
+  document.getElementById('f_estudio').value = p.estudio || 'Secundaria';
+  document.getElementById('f_profesion').value = p.profesion || '';
+  document.getElementById('f_empresa').value = p.empresa || '';
+  document.getElementById('f_empresa_ruc').value = p.empresa_ruc || '';
+  document.getElementById('f_empresa_direccion').value = p.empresa_direccion || '';
+  document.getElementById('f_empresa_telefono').value = p.empresa_telefono || '';
+  document.getElementById('f_empresa_web').value = p.empresa_web || '';
+  document.getElementById('f_empresa_email').value = p.empresa_email || '';
+  document.getElementById('f_tiempo_empresa').value = p.tiempo_empresa || '';
+  document.getElementById('f_cargo').value = p.cargo || '';
+  if (p.departamento) {
+    document.getElementById('f_departamento').value = p.departamento;
+    cargarProvincias();
+    if (p.provincia) {
+      document.getElementById('f_provincia').value = p.provincia;
+      cargarDistritos();
+      if (p.distrito) {
+        document.getElementById('f_distrito').value = p.distrito;
+        cargarUrbanizaciones();
+        var urb = document.getElementById('f_urbanizacion');
+        if (p.urbanizacion) {
+          var found = false;
+          for (var ui = 0; ui < urb.options.length; ui++) { if (urb.options[ui].value === p.urbanizacion) { found = true; break; } }
+          if (found) { urb.value = p.urbanizacion; }
+          else { urb.value = '__otra__'; document.getElementById('f_urbanizacion_otra').value = p.urbanizacion; document.getElementById('f_urbanizacion_otra').style.display = ''; }
+        }
+      }
+    }
+  }
+  document.getElementById('f_direccion').value = p.direccion || '';
+  document.getElementById('f_gmaps').value = p.gmaps || '';
+  document.getElementById('f_telefono').value = p.telefono || '';
+  document.getElementById('f_email').value = p.email || '';
+  document.getElementById('f_facebook').value = p.facebook || '';
+  document.getElementById('f_instagram').value = p.instagram || '';
+  document.getElementById('f_whatsapp').value = p.whatsapp || '';
+  document.getElementById('f_otra_red').value = p.otra_red || '';
+  document.getElementById('f_fortalezas').value = p.fortalezas || '';
+  document.getElementById('f_oportunidades').value = p.oportunidades || '';
+  document.getElementById('f_debilidades').value = p.debilidades || '';
+  document.getElementById('f_amenazas').value = p.amenazas || '';
+  if (p.foto) {
+    document.getElementById('f_foto_data').value = p.foto;
+    document.getElementById('f_foto_preview').src = p.foto;
+    document.getElementById('f_foto_preview').style.display = '';
+    document.getElementById('f_foto_placeholder').style.display = 'none';
+  } else {
+    document.getElementById('f_foto_data').value = '';
+    document.getElementById('f_foto_preview').style.display = 'none';
+    document.getElementById('f_foto_placeholder').style.display = '';
+  }
+  familiaTemp = (p.familia || []).map(m => ({...m}));
+  renderFamilia();
+  renderArchivosPersona(id);
+  switchTab('basico', document.querySelector('.tab-btn'));
+}
+
+function guardarPersona() {
+  const obj = {
+    nombre: document.getElementById('f_nombre').value.trim(),
+    tipo_doc: document.getElementById('f_tipo_doc').value,
+    documento: document.getElementById('f_documento').value.trim(),
+    nacimiento: document.getElementById('f_nacimiento').value,
+    nacionalidad: document.getElementById('f_nacionalidad').value,
+    estudio: document.getElementById('f_estudio').value,
+    profesion: document.getElementById('f_profesion').value.trim(),
+    empresa: document.getElementById('f_empresa').value.trim(),
+    empresa_ruc: document.getElementById('f_empresa_ruc').value.trim(),
+    empresa_direccion: document.getElementById('f_empresa_direccion').value.trim(),
+    empresa_telefono: document.getElementById('f_empresa_telefono').value.trim(),
+    empresa_web: document.getElementById('f_empresa_web').value.trim(),
+    empresa_email: document.getElementById('f_empresa_email').value.trim(),
+    tiempo_empresa: document.getElementById('f_tiempo_empresa').value.trim(),
+    cargo: document.getElementById('f_cargo').value.trim(),
+    departamento: document.getElementById('f_departamento').value,
+    provincia: document.getElementById('f_provincia').value,
+    distrito: document.getElementById('f_distrito').value,
+    urbanizacion: getUrbanizacion(),
+    direccion: document.getElementById('f_direccion').value.trim(),
+    gmaps: document.getElementById('f_gmaps').value.trim(),
+    telefono: document.getElementById('f_telefono').value.trim(),
+    email: document.getElementById('f_email').value.trim(),
+    facebook: document.getElementById('f_facebook').value.trim(),
+    instagram: document.getElementById('f_instagram').value.trim(),
+    whatsapp: document.getElementById('f_whatsapp').value.trim(),
+    otra_red: document.getElementById('f_otra_red').value.trim(),
+    fortalezas: document.getElementById('f_fortalezas').value.trim(),
+    oportunidades: document.getElementById('f_oportunidades').value.trim(),
+    debilidades: document.getElementById('f_debilidades').value.trim(),
+    amenazas: document.getElementById('f_amenazas').value.trim(),
+    familia: familiaTemp.filter(m => m.nombre.trim() !== ''),
+    foto: document.getElementById('f_foto_data').value || ''
+  };
+  if (!obj.nombre) { alert('El nombre es obligatorio'); return; }
+  const editId = document.getElementById('editId').value;
+  if (editId) {
+    const idx = personas.findIndex(x => x.id === parseInt(editId));
+    if (idx !== -1) { personas[idx] = { ...personas[idx], ...obj }; }
+  } else {
+    obj.id = nextPersonaId++;
+    obj.createdAt = new Date().toISOString();
+    personas.push(obj);
+  }
+  localStorage.setItem('fs_personas', JSON.stringify(personas));
+  localStorage.setItem('fs_nextPersonaId', String(nextPersonaId));
+  volverLista();
+}
+
+function eliminarPersona(id) {
+  if (!confirm('¿Eliminar esta persona y todos sus datos?')) return;
+  personas = personas.filter(x => x.id !== id);
+  archivos = archivos.filter(a => a.personaId !== id);
+  localStorage.setItem('fs_personas', JSON.stringify(personas));
+  localStorage.setItem('fs_archivos', JSON.stringify(archivos));
+  renderPersonas();
+}
+
+function verFicha(id) {
+  const p = personas.find(x => x.id === id);
+  if (!p) return;
+  document.getElementById('ficha-nombre').textContent = p.nombre || 'Sin nombre';
+  let html = '';
+
+  // Básico
+  html += '<div class="ficha-section"><h3>Información Básica</h3>';
+  html += '<div style="display:flex;gap:1.5rem;align-items:start;">';
+  html += '<div class="ficha-grid" style="flex:1;">';
+  html += '<div class="ficha-item"><span class="label">Documento</span><span class="value">' + escHtml(p.tipo_doc) + ' ' + escHtml(p.documento) + '</span></div>';
+  html += '<div class="ficha-item"><span class="label">Fecha de nacimiento</span><span class="value">' + (escHtml(p.nacimiento) || '—') + '</span></div>';
+  html += '<div class="ficha-item"><span class="label">Nacionalidad</span><span class="value">' + (escHtml(p.nacionalidad) || '—') + '</span></div>';
+  html += '<div class="ficha-item"><span class="label">Nivel de estudio</span><span class="value">' + escHtml(p.estudio) + '</span></div>';
+  html += '</div>';
+  if (p.foto) html += '<div><img src="' + escHtml(p.foto) + '" style="width:110px;height:110px;border-radius:50%;object-fit:cover;border:2px solid var(--border);flex-shrink:0;"></div>';
+  html += '</div></div>';
+
+  // Laboral
+  if (p.profesion || p.empresa || p.cargo) {
+    html += '<div class="ficha-section"><h3>Laboral</h3><div class="ficha-grid">';
+    html += '<div class="ficha-item"><span class="label">Profesion / Ocupacion</span><span class="value">' + escHtml(p.profesion || '') + '</span></div>';
+    html += '<div class="ficha-item"><span class="label">Empresa</span><span class="value">' + escHtml(p.empresa || '') + '</span></div>';
+    html += '<div class="ficha-item"><span class="label">RUC</span><span class="value">' + escHtml(p.empresa_ruc || '') + '</span></div>';
+    html += '<div class="ficha-item"><span class="label">Direccion empresa</span><span class="value">' + escHtml(p.empresa_direccion || '') + '</span></div>';
+    html += '<div class="ficha-item"><span class="label">Telefono empresa</span><span class="value">' + escHtml(p.empresa_telefono || '') + '</span></div>';
+    html += '<div class="ficha-item"><span class="label">Web</span><span class="value">' + escHtml(p.empresa_web || '') + '</span></div>';
+    html += '<div class="ficha-item"><span class="label">Email empresa</span><span class="value">' + escHtml(p.empresa_email || '') + '</span></div>';
+    html += '<div class="ficha-item"><span class="label">Tiempo en empresa</span><span class="value">' + escHtml(p.tiempo_empresa || '') + '</span></div>';
+    html += '<div class="ficha-item"><span class="label">Cargo</span><span class="value">' + escHtml(p.cargo || '') + '</span></div>';
+    html += '</div></div>';
+  }
+
+  // Contacto
+  html += '<div class="ficha-section"><h3>Contacto</h3><div class="ficha-grid">';
+  html += '<div class="ficha-item"><span class="label">Departamento</span><span class="value">' + escHtml(p.departamento || '') + '</span></div>';
+  html += '<div class="ficha-item"><span class="label">Provincia</span><span class="value">' + escHtml(p.provincia || '') + '</span></div>';
+  html += '<div class="ficha-item"><span class="label">Distrito</span><span class="value">' + escHtml(p.distrito || '') + '</span></div>';
+  html += '<div class="ficha-item"><span class="label">Urbanizacion</span><span class="value">' + escHtml(p.urbanizacion || '') + '</span></div>';
+  html += '<div class="ficha-item"><span class="label">Direccion</span><span class="value">' + escHtml(p.direccion || '') + '</span></div>';
+  if (p.gmaps) html += '<div class="ficha-item full"><span class="label">Google Maps</span><span class="value"><a href="' + escHtml(p.gmaps) + '" target="_blank">' + escHtml(p.gmaps) + '</a></span></div>';
+  html += '<div class="ficha-item"><span class="label">Telefono</span><span class="value">' + escHtml(p.telefono || '') + '</span></div>';
+  html += '<div class="ficha-item"><span class="label">Email</span><span class="value">' + escHtml(p.email || '') + '</span></div>';
+  html += '<div class="ficha-item"><span class="label">Facebook</span><span class="value">' + escHtml(p.facebook || '') + '</span></div>';
+  html += '<div class="ficha-item"><span class="label">Instagram</span><span class="value">' + escHtml(p.instagram || '') + '</span></div>';
+  html += '<div class="ficha-item"><span class="label">WhatsApp</span><span class="value">' + escHtml(p.whatsapp || '') + '</span></div>';
+  html += '<div class="ficha-item"><span class="label">Otra red</span><span class="value">' + escHtml(p.otra_red || '') + '</span></div>';
+  html += '</div></div>';
+
+  // Familia
+  if (p.familia && p.familia.length) {
+    html += `<div class="ficha-section"><h3>Familia</h3>
+    <table class="ficha-familia"><thead><tr><th>Nombre</th><th>Parentesco</th><th>Edad</th><th>Observación</th></tr></thead><tbody>`;
+    p.familia.forEach(m => {
+      html += `<tr><td>${escHtml(m.nombre)}</td><td>${escHtml(m.parentesco)}</td><td>${escHtml(m.edad)}</td><td>${escHtml(m.observacion)}</td></tr>`;
+    });
+    html += `</tbody></table></div>`;
+  }
+
+  // FODA
+  if (p.fortalezas || p.oportunidades || p.debilidades || p.amenazas) {
+    html += `<div class="ficha-section"><h3>FODA</h3><div class="ficha-foda">
+      <div class="ficha-foda-item ficha-fort"><h4>Fortalezas</h4><p>${escHtml(p.fortalezas) || '—'}</p></div>
+      <div class="ficha-foda-item ficha-opor"><h4>Oportunidades</h4><p>${escHtml(p.oportunidades) || '—'}</p></div>
+      <div class="ficha-foda-item ficha-debi"><h4>Debilidades</h4><p>${escHtml(p.debilidades) || '—'}</p></div>
+      <div class="ficha-foda-item ficha-amen"><h4>Amenazas</h4><p>${escHtml(p.amenazas) || '—'}</p></div>
+    </div></div>`;
+  }
+
+  // Historial
+  if (p.eventos && p.eventos.length) {
+    html += '<div class="ficha-section"><h3>Historial (' + p.eventos.length + ')</h3>';
+    html += '<table class="ficha-familia"><thead><tr><th>Fecha</th><th>Descripción</th></tr></thead><tbody>';
+    for (var ei = p.eventos.length - 1; ei >= 0; ei--) {
+      html += '<tr><td>' + escHtml(p.eventos[ei].fecha) + '</td><td>' + escHtml(p.eventos[ei].descripcion) + '</td></tr>';
+    }
+    html += '</tbody></table></div>';
+  }
+
+  // Archivos
+  const pArchivos = archivos.filter(a => a.personaId === id);
+  if (pArchivos.length) {
+    html += `<div class="ficha-section"><h3>Archivos (${pArchivos.length})</h3><div style="display:flex;flex-wrap:wrap;gap:.5rem;">`;
+    pArchivos.forEach(a => {
+      if (a.tipo === 'imagen') html += `<img src="${a.data}" alt="${escHtml(a.nombre)}" style="width:80px;height:80px;object-fit:cover;border-radius:4px;">`;
+      else html += `<span style="background:#f0f0f0;padding:.3rem .6rem;border-radius:4px;font-size:.8rem;">📄 ${escHtml(a.nombre)}</span>`;
+    });
+    html += `</div></div>`;
+  }
+
+  document.getElementById('ficha-body').innerHTML = html;
+  document.getElementById('ficha-modal').style.display = '';
+  currentFichaPersonaId = id;
+}
+
+// ============== HISTORIAL ==============
+var currentHistorialPersonaId = null;
+
+function verHistorial(id) {
+  currentHistorialPersonaId = id;
+  const p = personas.find(x => x.id === id);
+  if (!p) return;
+  document.getElementById('historial-title').textContent = 'Historial - ' + (p.nombre || 'Sin nombre');
+  document.getElementById('historial-fecha').value = new Date().toISOString().split('T')[0];
+  document.getElementById('historial-desc').value = '';
+  renderHistorial();
+  document.getElementById('historial-modal').style.display = '';
+}
+
+function cerrarHistorial() {
+  document.getElementById('historial-modal').style.display = 'none';
+}
+
+function agregarEvento() {
+  const fecha = document.getElementById('historial-fecha').value;
+  const desc = document.getElementById('historial-desc').value.trim();
+  if (!fecha || !desc) { alert('Completa la fecha y la descripción'); return; }
+  const p = personas.find(x => x.id === currentHistorialPersonaId);
+  if (!p) return;
+  if (!p.eventos) p.eventos = [];
+  p.eventos.push({ fecha: fecha, descripcion: desc });
+  localStorage.setItem('fs_personas', JSON.stringify(personas));
+  document.getElementById('historial-desc').value = '';
+  renderHistorial();
+}
+
+function eliminarEvento(idx) {
+  const p = personas.find(x => x.id === currentHistorialPersonaId);
+  if (!p || !p.eventos) return;
+  p.eventos.splice(idx, 1);
+  localStorage.setItem('fs_personas', JSON.stringify(personas));
+  renderHistorial();
+}
+
+function renderHistorial() {
+  const p = personas.find(x => x.id === currentHistorialPersonaId);
+  const c = document.getElementById('historial-lista');
+  if (!p || !p.eventos || !p.eventos.length) {
+    c.innerHTML = '<div class="empty-msg">Sin eventos registrados.</div>';
+    return;
+  }
+  var html = '<table><thead><tr><th>Fecha</th><th>Descripción</th><th></th></tr></thead><tbody>';
+  for (var i = p.eventos.length - 1; i >= 0; i--) {
+    var e = p.eventos[i];
+    html += '<tr><td style="white-space:nowrap;">' + escHtml(e.fecha) + '</td><td>' + escHtml(e.descripcion) + '</td><td><button class="btn btn-danger" onclick="eliminarEvento(' + i + ')" style="padding:.2rem .5rem;font-size:.75rem;">×</button></td></tr>';
+  }
+  html += '</tbody></table>';
+  c.innerHTML = html;
+}
+
+function exportarDatos() {
+  document.getElementById('export-modal').style.display = '';
+}
+function cerrarExport() {
+  document.getElementById('export-modal').style.display = 'none';
+}
+
+function escHtml(s) { return !s ? '' : String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function fichaHtmlPersona(p) {
+  if (!p) return '';
+  let h = '';
+  if (p.foto) {
+    h += '<div style="text-align:right;margin-bottom:.3rem;"><img src="' + escHtml(p.foto) + '" style="width:70px;height:70px;border-radius:50%;object-fit:cover;border:2px solid #ddd;"></div>';
+  }
+  h += '<div style="margin-bottom:.75rem;padding-bottom:.5rem;border-bottom:1px solid #ddd;"><strong>' + escHtml(p.nombre) + '</strong> &mdash; ' + escHtml(p.tipo_doc) + ' ' + escHtml(p.documento) + '</div>';
+  h += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem;font-size:.85rem;margin-bottom:.5rem;">';
+  h += '<div><span style="color:#888;">Nacionalidad:</span> ' + escHtml(p.nacionalidad) + '</div>';
+  h += '<div><span style="color:#888;">Estudio:</span> ' + escHtml(p.estudio) + '</div>';
+  h += '<div><span style="color:#888;">Profesion:</span> ' + escHtml(p.profesion) + '</div>';
+  h += '<div><span style="color:#888;">Empresa:</span> ' + escHtml(p.empresa) + '</div>';
+  h += '<div><span style="color:#888;">RUC:</span> ' + escHtml(p.empresa_ruc) + '</div>';
+  h += '<div><span style="color:#888;">Cargo:</span> ' + escHtml(p.cargo) + '</div>';
+  h += '<div><span style="color:#888;">Departamento:</span> ' + escHtml(p.departamento) + '</div>';
+  h += '<div><span style="color:#888;">Provincia:</span> ' + escHtml(p.provincia) + '</div>';
+  h += '<div><span style="color:#888;">Distrito:</span> ' + escHtml(p.distrito) + '</div>';
+  h += '<div><span style="color:#888;">Urbanizacion:</span> ' + escHtml(p.urbanizacion) + '</div>';
+  h += '<div><span style="color:#888;">Direccion:</span> ' + escHtml(p.direccion) + '</div>';
+  h += '<div><span style="color:#888;">Telefono:</span> ' + escHtml(p.telefono) + '</div>';
+  h += '<div><span style="color:#888;">Email:</span> ' + escHtml(p.email) + '</div>';
+  h += '</div>';
+  if (p.familia && p.familia.length) {
+    h += '<div style="font-size:.85rem;margin-bottom:.5rem;"><span style="color:#888;">Familia:</span> ';
+    h += p.familia.map(function(m) { return escHtml(m.nombre) + ' (' + escHtml(m.parentesco) + ')'; }).join(', ');
+    h += '</div>';
+  }
+  if (p.fortalezas || p.oportunidades || p.debilidades || p.amenazas) {
+    h += '<div style="font-size:.85rem;margin-bottom:.5rem;">';
+    if (p.fortalezas) h += '<span style="color:#2e7d32;font-weight:600;">F:</span> ' + escHtml(p.fortalezas) + ' ';
+    if (p.oportunidades) h += '<span style="color:#1565c0;font-weight:600;">O:</span> ' + escHtml(p.oportunidades) + ' ';
+    if (p.debilidades) h += '<span style="color:#e65100;font-weight:600;">D:</span> ' + escHtml(p.debilidades) + ' ';
+    if (p.amenazas) h += '<span style="color:#c62828;font-weight:600;">A:</span> ' + escHtml(p.amenazas) + ' ';
+    h += '</div>';
+  }
+  if (p.eventos && p.eventos.length) {
+    h += '<div style="font-size:.85rem;margin-bottom:.5rem;"><span style="color:#888;">Eventos:</span> ';
+    h += p.eventos.map(function(e) { return escHtml(e.fecha) + ' - ' + escHtml(e.descripcion); }).join(' | ');
+    h += '</div>';
+  }
+  return h;
+}
+
+function exportarWeb() {
+  try {
+    var fecha = new Date().toLocaleDateString();
+    var h = '<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><title>SEC - Reporte de Personas</title>';
+    h += '<style>body{font-family:Segoe UI,sans-serif;background:#fff;color:#333;padding:2rem;max-width:900px;margin:auto;}';
+    h += 'h1{color:#1a237e;border-bottom:3px solid #1a237e;padding-bottom:.5rem;}';
+    h += '.p-card{background:#f9f9f9;border:1px solid #ddd;border-radius:8px;padding:1rem;margin-bottom:1rem;}';
+    h += 'table{width:100%;border-collapse:collapse;margin-top:.5rem;}';
+    h += 'th,td{text-align:left;padding:.5rem;border-bottom:1px solid #ddd;font-size:.85rem;}';
+    h += 'th{background:#f0f2f5;}';
+    h += '</style></head><body>';
+    h += '<h1>SEC - Sistema Empadronador Confianza</h1>';
+    h += '<p style="color:#888;font-size:.85rem;">Generado el ' + fecha + ' | Total: ' + personas.length + ' personas</p>';
+    h += '<p style="color:#888;">Generado el ' + fecha + ' | Total: ' + personas.length + ' personas</p>';
+    if (personas.length === 0) h += '<p>No hay personas registradas.</p>';
+    for (var i = 0; i < personas.length; i++) {
+      h += '<div class="p-card">' + fichaHtmlPersona(personas[i]) + '</div>';
+    }
+    h += '</body></html>';
+    descargarArchivo(h, 'reporte-fileserver.html', 'text/html');
+    setTimeout(cerrarExport, 100);
+  } catch(e) { alert('Error al exportar HTML: ' + e.message); }
+}
+
+function exportarPDF() {
+  try {
+    var fecha = new Date().toLocaleDateString();
+    var h = '<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><title>SEC - Reporte de Personas</title>';
+    h += '<style>body{font-family:Segoe UI,sans-serif;color:#333;padding:2rem;max-width:900px;margin:auto;}';
+    h += 'h1{color:#1a237e;border-bottom:3px solid #1a237e;padding-bottom:.5rem;font-size:1.5rem;}';
+    h += '.p-card{border:1px solid #ccc;border-radius:6px;padding:1rem;margin-bottom:1rem;page-break-inside:avoid;}';
+    h += 'table{width:100%;border-collapse:collapse;margin-top:.5rem;}';
+    h += 'th,td{text-align:left;padding:.4rem;border-bottom:1px solid #ddd;font-size:.8rem;}';
+    h += 'th{background:#f0f2f5;}';
+    h += '@media print{body{padding:.5rem;} .p-card{border:1px solid #999;}}';
+    h += '</style></head><body>';
+    h += '<h1>SEC - Sistema Empadronador Confianza</h1>';
+    h += '<p style="color:#666;font-size:.85rem;">Generado el ' + fecha + ' | Total: ' + personas.length + ' personas</p>';
+    if (personas.length === 0) h += '<p>No hay personas registradas.</p>';
+    for (var i = 0; i < personas.length; i++) {
+      h += '<div class="p-card">' + fichaHtmlPersona(personas[i]) + '</div>';
+    }
+    h += '<script>window.print()<' + '/script></body></html>';
+    var win = window.open('', '_blank');
+    if (win) {
+      win.document.write(h);
+      win.document.close();
+    } else {
+      descargarArchivo(h, 'reporte-fileserver.pdf.html', 'text/html');
+    }
+    setTimeout(cerrarExport, 100);
+  } catch(e) { alert('Error al exportar PDF: ' + e.message); }
+}
+
+function exportarFichaPDF() {
+  try {
+    const p = personas.find(x => x.id === currentFichaPersonaId);
+    if (!p) return;
+    var fecha = new Date().toLocaleDateString();
+    var h = '<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><title>SEC - ' + escHtml(p.nombre) + '</title>';
+    h += '<style>body{font-family:Segoe UI,sans-serif;color:#333;padding:2rem;max-width:800px;margin:auto;}';
+    h += 'h1{color:#1a237e;border-bottom:3px solid #1a237e;padding-bottom:.5rem;font-size:1.4rem;}';
+    h += 'h3{color:#1a237e;font-size:1rem;border-bottom:1px solid #ddd;padding-bottom:.25rem;margin-top:1.2rem;}';
+    h += 'table{width:100%;border-collapse:collapse;margin-top:.3rem;}';
+    h += 'th,td{text-align:left;padding:.4rem;border-bottom:1px solid #ddd;font-size:.8rem;}';
+    h += 'th{background:#f0f2f5;}';
+    h += '.grid{display:grid;grid-template-columns:1fr 1fr;gap:.5rem;}';
+    h += '.item{font-size:.85rem;padding:.3rem 0;}';
+    h += '.label{color:#888;font-size:.75rem;}';
+    h += '.foda-grid{display:grid;grid-template-columns:1fr 1fr;gap:.6rem;margin-top:.3rem;}';
+    h += '.foda-item{padding:.6rem;border-radius:4px;}';
+    h += '.f{background:#e8f5e9;border-left:3px solid #2e7d32;}';
+    h += '.o{background:#e3f2fd;border-left:3px solid #1565c0;}';
+    h += '.d{background:#fff3e0;border-left:3px solid #e65100;}';
+    h += '.a{background:#fce4ec;border-left:3px solid #c62828;}';
+    h += '.foda-item h4{margin:0 0 .2rem;font-size:.8rem;}';
+    h += '.foda-item p{margin:0;font-size:.8rem;white-space:pre-wrap;}';
+    h += '@media print{body{padding:.5rem;}}';
+    h += '</style></head><body>';
+    if (p.foto) {
+      h += '<div style="display:flex;align-items:start;justify-content:space-between;">';
+      h += '<div>';
+    }
+    h += '<h1>' + escHtml(p.nombre) + '</h1>';
+    h += '<p style="color:#888;font-size:.85rem;">Generado el ' + fecha + '</p>';
+    if (p.foto) {
+      h += '</div>';
+      h += '<img src="' + escHtml(p.foto) + '" style="width:110px;height:110px;border-radius:50%;object-fit:cover;border:3px solid #1a237e;flex-shrink:0;">';
+      h += '</div>';
+    }
+
+    h += '<h3>Información Básica</h3><div class="grid">';
+    h += '<div class="item"><div class="label">Documento</div>' + escHtml(p.tipo_doc) + ' ' + (escHtml(p.documento) || 'Sin información') + '</div>';
+    h += '<div class="item"><div class="label">Fecha de nacimiento</div>' + (escHtml(p.nacimiento) || 'Sin información') + '</div>';
+    h += '<div class="item"><div class="label">Nacionalidad</div>' + (escHtml(p.nacionalidad) || 'Sin información') + '</div>';
+    h += '<div class="item"><div class="label">Nivel de estudio</div>' + (escHtml(p.estudio) || 'Sin información') + '</div>';
+    h += '</div>';
+
+    if (p.profesion || p.empresa || p.cargo) {
+      h += '<h3>Laboral</h3><div class="grid">';
+      h += '<div class="item"><div class="label">Profesión / Ocupación</div>' + (escHtml(p.profesion) || 'Sin información') + '</div>';
+      h += '<div class="item"><div class="label">Empresa</div>' + (escHtml(p.empresa) || 'Sin información') + '</div>';
+      h += '<div class="item"><div class="label">RUC</div>' + (escHtml(p.empresa_ruc) || 'Sin información') + '</div>';
+      h += '<div class="item"><div class="label">Dirección empresa</div>' + (escHtml(p.empresa_direccion) || 'Sin información') + '</div>';
+      h += '<div class="item"><div class="label">Teléfono empresa</div>' + (escHtml(p.empresa_telefono) || 'Sin información') + '</div>';
+      h += '<div class="item"><div class="label">Web</div>' + (escHtml(p.empresa_web) || 'Sin información') + '</div>';
+      h += '<div class="item"><div class="label">Email empresa</div>' + (escHtml(p.empresa_email) || 'Sin información') + '</div>';
+      h += '<div class="item"><div class="label">Tiempo en empresa</div>' + (escHtml(p.tiempo_empresa) || 'Sin información') + '</div>';
+      h += '<div class="item"><div class="label">Cargo</div>' + (escHtml(p.cargo) || 'Sin información') + '</div>';
+      h += '</div>';
+    }
+
+    h += '<h3>Contacto</h3><div class="grid">';
+    h += '<div class="item"><div class="label">Departamento</div>' + (escHtml(p.departamento) || 'Sin información') + '</div>';
+    h += '<div class="item"><div class="label">Provincia</div>' + (escHtml(p.provincia) || 'Sin información') + '</div>';
+    h += '<div class="item"><div class="label">Distrito</div>' + (escHtml(p.distrito) || 'Sin información') + '</div>';
+    h += '<div class="item"><div class="label">Urbanización</div>' + (escHtml(p.urbanizacion) || 'Sin información') + '</div>';
+    h += '<div class="item"><div class="label">Dirección</div>' + (escHtml(p.direccion) || 'Sin información') + '</div>';
+    h += '<div class="item"><div class="label">Teléfono</div>' + (escHtml(p.telefono) || 'Sin información') + '</div>';
+    h += '<div class="item"><div class="label">Email</div>' + (escHtml(p.email) || 'Sin información') + '</div>';
+    h += '<div class="item"><div class="label">Facebook</div>' + (escHtml(p.facebook) || 'Sin información') + '</div>';
+    h += '<div class="item"><div class="label">Instagram</div>' + (escHtml(p.instagram) || 'Sin información') + '</div>';
+    h += '<div class="item"><div class="label">WhatsApp</div>' + (escHtml(p.whatsapp) || 'Sin información') + '</div>';
+    h += '<div class="item"><div class="label">Otra red</div>' + (escHtml(p.otra_red) || 'Sin información') + '</div>';
+    h += '</div>';
+
+    if (p.familia && p.familia.length) {
+      h += '<h3>Familia</h3><table><thead><tr><th>Nombre</th><th>Parentesco</th><th>Edad</th><th>Observación</th></tr></thead><tbody>';
+      p.familia.forEach(m => {
+        h += '<tr><td>' + escHtml(m.nombre) + '</td><td>' + escHtml(m.parentesco) + '</td><td>' + escHtml(m.edad) + '</td><td>' + escHtml(m.observacion) + '</td></tr>';
+      });
+      h += '</tbody></table>';
+    }
+
+    if (p.fortalezas || p.oportunidades || p.debilidades || p.amenazas) {
+      h += '<h3>FODA</h3><div class="foda-grid">';
+      h += '<div class="foda-item f"><h4>Fortalezas</h4><p>' + (escHtml(p.fortalezas) || 'Sin información') + '</p></div>';
+      h += '<div class="foda-item o"><h4>Oportunidades</h4><p>' + (escHtml(p.oportunidades) || 'Sin información') + '</p></div>';
+      h += '<div class="foda-item d"><h4>Debilidades</h4><p>' + (escHtml(p.debilidades) || 'Sin información') + '</p></div>';
+      h += '<div class="foda-item a"><h4>Amenazas</h4><p>' + (escHtml(p.amenazas) || 'Sin información') + '</p></div>';
+      h += '</div>';
+    }
+
+    if (p.eventos && p.eventos.length) {
+      h += '<h3>Historial</h3><table><thead><tr><th>Fecha</th><th>Descripción</th></tr></thead><tbody>';
+      for (var ei = p.eventos.length - 1; ei >= 0; ei--) {
+        h += '<tr><td>' + escHtml(p.eventos[ei].fecha) + '</td><td>' + escHtml(p.eventos[ei].descripcion) + '</td></tr>';
+      }
+      h += '</tbody></table>';
+    }
+
+    h += '<script>window.print()<' + '/script></body></html>';
+    var win = window.open('', '_blank');
+    if (win) {
+      win.document.write(h);
+      win.document.close();
+    } else {
+      descargarArchivo(h, 'ficha-' + (p.nombre || 'persona').replace(/[^a-z0-9]/gi, '_') + '.html', 'text/html');
+    }
+  } catch(e) { alert('Error al exportar PDF: ' + e.message); }
+}
+
+function exportarCSV() {
+  try {
+    var sep = ',';
+    function escCsv(v) {
+      var s = String(v || '');
+      if (s.indexOf(sep) >= 0 || s.indexOf('"') >= 0 || s.indexOf('\n') >= 0) {
+        return '"' + s.replace(/"/g, '""') + '"';
+      }
+      return s;
+    }
+    var csv = '\uFEFFNombre,Tipo Doc,Nro Documento,Fec.Nacimiento,Nacionalidad,Estudio,Profesion,Empresa,RUC Empresa,Direccion Empresa,Telefono Empresa,Web Empresa,Email Empresa,Tiempo Empresa,Cargo,Departamento,Provincia,Distrito,Urbanizacion,Direccion,Gmaps,Telefono,Email,Facebook,Instagram,WhatsApp,Otra Red,Fortalezas,Oportunidades,Debilidades,Amenazas,Familia\n';
+    for (var i = 0; i < personas.length; i++) {
+      var p = personas[i];
+      var fam = '';
+      if (p.familia && p.familia.length) {
+        var farr = [];
+        for (var j = 0; j < p.familia.length; j++) {
+          farr.push(p.familia[j].nombre + ' (' + p.familia[j].parentesco + ')');
+        }
+        fam = farr.join('; ');
+      }
+      csv += [p.nombre, p.tipo_doc, p.documento, p.nacimiento, p.nacionalidad, p.estudio, p.profesion,
+        p.empresa, p.empresa_ruc, p.empresa_direccion, p.empresa_telefono, p.empresa_web, p.empresa_email, p.tiempo_empresa, p.cargo,
+        p.departamento, p.provincia, p.distrito, p.urbanizacion, p.direccion, p.gmaps,
+        p.telefono, p.email, p.facebook, p.instagram, p.whatsapp, p.otra_red,
+        p.fortalezas, p.oportunidades, p.debilidades, p.amenazas, fam].map(escCsv).join(sep) + '\n';
+    }
+    descargarArchivo(csv, 'reporte-fileserver.csv', 'text/csv;charset=utf-8');
+    setTimeout(cerrarExport, 100);
+  } catch(e) { alert('Error al exportar CSV: ' + e.message); }
+}
+
+function cargarFoto(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    document.getElementById('f_foto_data').value = e.target.result;
+    document.getElementById('f_foto_preview').src = e.target.result;
+    document.getElementById('f_foto_preview').style.display = '';
+    document.getElementById('f_foto_placeholder').style.display = 'none';
+  };
+  reader.readAsDataURL(file);
+}
+
+function descargarArchivo(contenido, nombre, mime) {
+  var uri = 'data:application/octet-stream;charset=utf-8,' + encodeURIComponent(contenido);
+  var a = document.createElement('a');
+  a.href = uri;
+  a.download = nombre;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+}
+
+function toggleTema() {
+  document.body.classList.toggle('dark');
+  var b = document.getElementById('tema-btn');
+  b.textContent = document.body.classList.contains('dark') ? '☀️' : '🌙';
+  localStorage.setItem('fs_tema', document.body.classList.contains('dark') ? 'dark' : '');
+}
+function aplicarTema() {
+  var b = document.getElementById('tema-btn');
+  if (!b) return;
+  if (localStorage.getItem('fs_tema') === 'dark') {
+    document.body.classList.add('dark');
+    b.textContent = '☀️';
+  } else {
+    document.body.classList.remove('dark');
+    b.textContent = '🌙';
+  }
+}
+
+function importarDatos(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const data = JSON.parse(e.target.result);
+      if (!data.personas || !data.archivos) { alert('Archivo inválido'); return; }
+      if (!confirm('¿Importar datos? Se reemplazarán todos los datos actuales.')) return;
+      personas = data.personas;
+      archivos = data.archivos;
+      nextPersonaId = data.nextPersonaId || 1;
+      nextArchivoId = data.nextArchivoId || 1;
+      localStorage.setItem('fs_personas', JSON.stringify(personas));
+      localStorage.setItem('fs_archivos', JSON.stringify(archivos));
+      localStorage.setItem('fs_nextPersonaId', String(nextPersonaId));
+      localStorage.setItem('fs_nextArchivoId', String(nextArchivoId));
+      renderPersonas();
+      renderArchivos();
+      alert('Datos importados correctamente');
+    } catch(e) { alert('Error al importar: ' + e.message); }
+  };
+  reader.readAsText(file);
+  event.target.value = '';
+}
+
+function importarCSV(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      var texto = e.target.result;
+      texto = texto.replace(/^\uFEFF/, '');
+      var lineas = texto.split(/\r?\n/).filter(function(l) { return l.trim(); });
+      if (lineas.length < 2) { alert('CSV vacío o sin datos'); return; }
+
+      var cabeceras = parseCSVLine(lineas[0]);
+      if (cabeceras.length < 5) { alert('El CSV no tiene el formato esperado'); return; }
+
+      if (!confirm('¿Importar datos desde CSV? Se agregarán a los existentes.')) return;
+
+      var agregados = 0;
+      for (var i = 1; i < lineas.length; i++) {
+        var cols = parseCSVLine(lineas[i]);
+        if (cols.length < 5) continue;
+        var p = {
+          id: nextPersonaId++,
+          createdAt: new Date().toISOString(),
+          nombre: (cols[0]||'').trim(),
+          tipo_doc: (cols[1]||'DNI').trim(),
+          documento: (cols[2]||'').trim(),
+          nacimiento: (cols[3]||'').trim(),
+          nacionalidad: (cols[4]||'Peruana').trim(),
+          estudio: (cols[5]||'Secundaria').trim(),
+          profesion: (cols[6]||'').trim(),
+          empresa: (cols[7]||'').trim(),
+          empresa_ruc: (cols[8]||'').trim(),
+          empresa_direccion: (cols[9]||'').trim(),
+          empresa_telefono: (cols[10]||'').trim(),
+          empresa_web: (cols[11]||'').trim(),
+          empresa_email: (cols[12]||'').trim(),
+          tiempo_empresa: (cols[13]||'').trim(),
+          cargo: (cols[14]||'').trim(),
+          departamento: (cols[15]||'').trim(),
+          provincia: (cols[16]||'').trim(),
+          distrito: (cols[17]||'').trim(),
+          urbanizacion: (cols[18]||'').trim(),
+          direccion: (cols[19]||'').trim(),
+          gmaps: (cols[20]||'').trim(),
+          telefono: (cols[21]||'').trim(),
+          email: (cols[22]||'').trim(),
+          facebook: (cols[23]||'').trim(),
+          instagram: (cols[24]||'').trim(),
+          whatsapp: (cols[25]||'').trim(),
+          otra_red: (cols[26]||'').trim(),
+          fortalezas: (cols[27]||'').trim(),
+          oportunidades: (cols[28]||'').trim(),
+          debilidades: (cols[29]||'').trim(),
+          amenazas: (cols[30]||'').trim(),
+          familia: []
+        };
+        var famRaw = (cols[31]||'').trim();
+        if (famRaw) {
+          var miembros = famRaw.split(';');
+          for (var j = 0; j < miembros.length; j++) {
+            var m = miembros[j].trim();
+            var match = m.match(/^(.+?)\s*\((.+?)\)\s*$/);
+            if (match) {
+              p.familia.push({ nombre: match[1].trim(), parentesco: match[2].trim(), edad: '', observacion: '' });
+            } else if (m) {
+              p.familia.push({ nombre: m, parentesco: 'Familiar', edad: '', observacion: '' });
+            }
+          }
+        }
+        if (p.nombre) {
+          personas.push(p);
+          agregados++;
+        }
+      }
+      localStorage.setItem('fs_personas', JSON.stringify(personas));
+      localStorage.setItem('fs_nextPersonaId', String(nextPersonaId));
+      renderPersonas();
+      alert('Se importaron ' + agregados + ' personas desde CSV');
+    } catch(e) { alert('Error al importar CSV: ' + e.message); }
+  };
+  reader.readAsText(file);
+  event.target.value = '';
+}
+
+function parseCSVLine(line) {
+  var result = [], current = '', inQuotes = false, i = 0;
+  while (i < line.length) {
+    var ch = line[i];
+    if (inQuotes) {
+      if (ch === '"') {
+        if (i + 1 < line.length && line[i + 1] === '"') {
+          current += '"';
+          i += 2;
+        } else {
+          inQuotes = false;
+          i++;
+        }
+      } else {
+        current += ch;
+        i++;
+      }
+    } else {
+      if (ch === '"') {
+        inQuotes = true;
+        i++;
+      } else if (ch === ',') {
+        result.push(current);
+        current = '';
+        i++;
+      } else {
+        current += ch;
+        i++;
+      }
+    }
+  }
+  result.push(current);
+  return result;
+}
+
+function cerrarFicha() {
+  document.getElementById('ficha-modal').style.display = 'none';
+}
+
+function volverLista() {
+  document.getElementById('persona-list-view').style.display = '';
+  document.getElementById('persona-detail-view').classList.remove('active');
+  renderPersonas();
+}
+
+function limpiarFormPersona() {
+  ['f_nombre','f_documento','f_nacimiento','f_profesion','f_empresa','f_empresa_ruc','f_empresa_direccion','f_empresa_telefono','f_empresa_web','f_empresa_email','f_tiempo_empresa','f_cargo','f_direccion','f_gmaps','f_telefono','f_email','f_facebook','f_instagram','f_whatsapp','f_otra_red','f_fortalezas','f_oportunidades','f_debilidades','f_amenazas'].forEach(function(id) { var el = document.getElementById(id); if (el) el.value = ''; });
+  document.getElementById('f_departamento').value = '';
+  document.getElementById('f_provincia').innerHTML = '<option value="">Seleccionar...</option>';
+  document.getElementById('f_distrito').innerHTML = '<option value="">Seleccionar...</option>';
+  document.getElementById('f_urbanizacion').innerHTML = '<option value="">Seleccionar...</option>';
+  document.getElementById('f_urbanizacion_otra').value = '';
+  document.getElementById('f_urbanizacion_otra').style.display = 'none';
+  document.getElementById('f_tipo_doc').value = 'DNI';
+  document.getElementById('f_nacionalidad').value = 'Peruana';
+  document.getElementById('f_estudio').value = 'Secundaria';
+  document.getElementById('f_foto_data').value = '';
+  document.getElementById('f_foto_preview').style.display = 'none';
+  document.getElementById('f_foto_preview').src = '';
+  document.getElementById('f_foto_placeholder').style.display = '';
+}
+
+function renderPersonas() {
+  const q = document.getElementById('searchPersona').value.toLowerCase().trim();
+  const filtered = q ? personas.filter(p => (p.nombre||'').toLowerCase().includes(q) || (p.documento||'').includes(q)) : personas;
+  let html = '';
+  if (filtered.length === 0) {
+    html = '<div class="empty-msg">No hay personas registradas.</div>';
+  } else {
+    html = `<table><thead><tr><th>Nombre</th><th>Documento</th><th>Cargo</th><th>Teléfono</th><th>Acciones</th></tr></thead><tbody>`;
+    filtered.forEach(p => {
+      html += `<tr>
+        <td>${escHtml(p.nombre)}</td>
+        <td>${escHtml(p.tipo_doc)} ${escHtml(p.documento)}</td>
+        <td>${escHtml(p.cargo)}</td>
+        <td>${escHtml(p.telefono)}</td>
+        <td class="actions-cell">
+          <button class="btn btn-success" onclick="verFicha(${p.id})">Ver ficha</button>
+          <button class="btn btn-primary" onclick="editarPersona(${p.id})">Editar</button>
+          <button class="btn btn-secondary" onclick="verHistorial(${p.id})">Historial</button>
+          <button class="btn btn-danger" onclick="eliminarPersona(${p.id})">Eliminar</button>
+        </td>
+      </tr>`;
+    });
+    html += '</tbody></table>';
+  }
+  document.getElementById('personas-table-wrapper').innerHTML = html;
+}
+
+// ============== TABS ==============
+function switchTab(name, btn) {
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  if (btn) btn.classList.add('active');
+}
+
+// ============== FAMILIA ==============
+function agregarFamiliar() {
+  familiaTemp.push({ nombre: '', parentesco: 'Familiar', edad: '', observacion: '' });
+  renderFamilia();
+}
+
+function eliminarFamiliar(idx) {
+  familiaTemp.splice(idx, 1);
+  renderFamilia();
+}
+
+function renderFamilia() {
+  const c = document.getElementById('familia-container');
+  if (familiaTemp.length === 0) {
+    c.innerHTML = '<div class="empty-msg">No hay miembros de familia agregados.</div>';
+    return;
+  }
+  let html = '';
+  familiaTemp.forEach((m, i) => {
+    html += `<div class="family-member">
+      <input type="text" placeholder="Nombre" value="${escHtml(m.nombre)}" onchange="familiaTemp[${i}].nombre=this.value">
+      <select onchange="familiaTemp[${i}].parentesco=this.value">
+        ${['Familiar','Padre','Madre','Hermano(a)','Hijo(a)','Esposo(a)','Abuelo(a)','Tío(a)','Primo(a)','Otro'].map(o =>
+          `<option value="${o}" ${m.parentesco===o?'selected':''}>${o}</option>`
+        ).join('')}
+      </select>
+      <input type="number" placeholder="Edad" value="${escHtml(m.edad)}" style="width:70px" onchange="familiaTemp[${i}].edad=this.value">
+      <input type="text" placeholder="Observación" value="${escHtml(m.observacion)}" onchange="familiaTemp[${i}].observacion=this.value">
+      <button class="btn btn-danger" onclick="eliminarFamiliar(${i})" style="padding:.3rem .6rem;font-size:.8rem;">×</button>
+    </div>`;
+  });
+  c.innerHTML = html;
+}
+
+// ============== ARCHIVOS ==============
+function subirArchivosGlobal(event) {
+  const files = event.target.files;
+  for (const f of files) guardarArchivo(f, null);
+  event.target.value = '';
+  renderArchivos();
+}
+
+function subirArchivosPersona(event) {
+  const files = event.target.files;
+  const personaId = parseInt(document.getElementById('editId').value);
+  if (!personaId) { alert('Guarda la persona primero antes de subir archivos.'); return; }
+  for (const f of files) guardarArchivo(f, personaId);
+  event.target.value = '';
+  renderArchivosPersona(personaId);
+}
+
+function guardarArchivo(file, personaId) {
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    const tipo = file.type.startsWith('image/') ? 'imagen' : file.type.startsWith('video/') ? 'video' : file.type.startsWith('audio/') ? 'audio' : 'documento';
+    archivos.push({
+      id: nextArchivoId++,
+      personaId: personaId,
+      nombre: file.name,
+      tipo: tipo,
+      mime: file.type,
+      size: file.size,
+      data: e.target.result,
+      createdAt: new Date().toISOString()
+    });
+    localStorage.setItem('fs_archivos', JSON.stringify(archivos));
+    localStorage.setItem('fs_nextArchivoId', String(nextArchivoId));
+    if (!personaId) renderArchivos();
+    else renderArchivosPersona(personaId);
+  };
+  reader.readAsDataURL(file);
+}
+
+function eliminarArchivo(id, personaId) {
+  archivos = archivos.filter(a => a.id !== id);
+  localStorage.setItem('fs_archivos', JSON.stringify(archivos));
+  if (personaId) renderArchivosPersona(personaId);
+  else renderArchivos();
+}
+
+function descargarArchivoPorId(id) {
+  const a = archivos.find(x => x.id === id);
+  if (!a) return;
+  const link = document.createElement('a');
+  link.href = a.data;
+  link.download = a.nombre;
+  link.click();
+}
+
+function renderArchivos() {
+  const q = document.getElementById('searchArchivo').value.toLowerCase().trim();
+  const filtered = q ? archivos.filter(a => (a.nombre||'').toLowerCase().includes(q) && !a.personaId) : archivos.filter(a => !a.personaId);
+  renderFileGrid('archivos-grid', filtered, null);
+}
+
+function renderArchivosPersona(personaId) {
+  const pArchivos = archivos.filter(a => a.personaId === personaId);
+  renderFileGrid('persona-files-grid', pArchivos, personaId);
+}
+
+function renderFileGrid(containerId, items, personaId) {
+  const c = document.getElementById(containerId);
+  if (!items.length) { c.innerHTML = '<div class="empty-msg">Sin archivos.</div>'; return; }
+  let html = '';
+  items.forEach(a => {
+    html += `<div class="file-card">`;
+    if (a.tipo === 'imagen') html += `<img src="${a.data}" alt="${escHtml(a.nombre)}">`;
+    else if (a.tipo === 'video') html += `<video src="${a.data}" controls></video>`;
+    else if (a.tipo === 'audio') html += `<audio src="${a.data}" controls></audio>`;
+    else html += `<div style="height:150px;display:flex;align-items:center;justify-content:center;background:#eee;font-size:2rem;">📄</div>`;
+    html += `<div class="file-info">
+      <div class="file-name">${escHtml(a.nombre)}</div>
+      <div class="file-size">${formatSize(a.size)}</div>
+      <span class="file-type">${a.tipo}</span>
+    </div>
+    <button class="file-remove" onclick="eliminarArchivo(${a.id},${personaId})" title="Eliminar">×</button>
+    </div>`;
+  });
+  c.innerHTML = html;
+}
+
+// ============== DRAG & DROP ==============
+['dropzone-global','dropzone-persona'].forEach(id => {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.addEventListener('dragover', e => { e.preventDefault(); el.classList.add('dragover'); });
+  el.addEventListener('dragleave', () => el.classList.remove('dragover'));
+  el.addEventListener('drop', e => {
+    e.preventDefault();
+    el.classList.remove('dragover');
+    const files = e.dataTransfer.files;
+    if (id === 'dropzone-persona') {
+      const personaId = parseInt(document.getElementById('editId').value);
+      if (!personaId) { alert('Guarda la persona primero.'); return; }
+      for (const f of files) guardarArchivo(f, personaId);
+    } else {
+      for (const f of files) guardarArchivo(f, null);
+    }
+  });
+});
+
+// ============== UTILIDADES ==============
+function formatSize(bytes) {
+  if (bytes < 1024) return bytes + ' B';
+  if (bytes < 1048576) return (bytes/1024).toFixed(1) + ' KB';
+  return (bytes/1048576).toFixed(1) + ' MB';
+}
+
+// ============== INICIO ==============
+function initSelectores() {
+  var sel = document.getElementById('f_departamento');
+  if (!sel) return;
+  var deps = Object.keys(PERU).sort();
+  sel.innerHTML = '<option value="">Seleccionar...</option>';
+  for (var i = 0; i < deps.length; i++) sel.innerHTML += '<option value="' + deps[i] + '">' + deps[i] + '</option>';
+}
+initSelectores();
+renderPersonas();
+renderArchivos();
+</script>
+</body>
+</html>
