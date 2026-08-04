@@ -250,7 +250,7 @@ footer { text-align: center; padding: 1.8rem 1rem 2.2rem; color: var(--text3); f
   <nav>
     <button onclick="abrirCalculadora()">🧮 Calculadora</button>
     <button onclick="abrirResumenDeudor()">📊 Resumen</button>
-    <span class="sync-badge" id="sync-status" title="Estado de sincronización">☁️ —</span>
+    <span class="sync-badge" id="sync-status" title="Estado de sincronización — pulsa para sincronizar" onclick="sincronizarAhora()" style="cursor:pointer;">☁️ —</span>
     <button onclick="logout()">🚪 Salir</button>
     <button onclick="toggleTema()" id="tema-btn">🌙</button>
   </nav>
@@ -544,6 +544,8 @@ function loginLocal() {
 }
 
 // ============== GOOGLE SHEETS ==============
+let sheetTabName = GOOGLE_SHEET_TAB;
+
 async function sheetApi(path, metodo, body) {
   const token = await getAccessToken();
   if (!token) throw new Error('Sin token');
@@ -556,10 +558,20 @@ async function sheetApi(path, metodo, body) {
   return r.json();
 }
 
+async function initSheetTab() {
+  try {
+    const meta = await sheetApi('?fields=sheets.properties.title', 'GET');
+    const tabs = (meta.sheets || []).map(s => s.properties && s.properties.title).filter(Boolean);
+    const exact = tabs.find(t => t === GOOGLE_SHEET_TAB);
+    sheetTabName = exact || tabs[0] || GOOGLE_SHEET_TAB;
+  } catch (e) {}
+}
+
 async function cargarDesdeSheet() {
+  await initSheetTab();
   let remoto = null;
   try {
-    const res = await sheetApi('values/' + GOOGLE_SHEET_TAB + '!A1:A1', 'GET');
+    const res = await sheetApi('values/' + sheetTabName + '!A1:A1', 'GET');
     if (res && res.values && res.values.length) remoto = res.values[0][0];
   } catch (e) { return 'error'; }
   if (!remoto) return 'migrar';
@@ -578,8 +590,8 @@ async function cargarDesdeSheet() {
 async function pushToSheet() {
   setSync('warn', '☁️ Subiendo…');
   try {
-    await sheetApi('values/' + GOOGLE_SHEET_TAB + '!A1:A1?valueInputOption=RAW', 'PUT', {
-      range: GOOGLE_SHEET_TAB + '!A1', majorDimension: 'ROWS', values: [[JSON.stringify(db)]]
+    await sheetApi('values/' + sheetTabName + '!A1:A1?valueInputOption=RAW', 'PUT', {
+      range: sheetTabName + '!A1', majorDimension: 'ROWS', values: [[JSON.stringify(db)]]
     });
     setSync('ok', '☁️ Sincronizado');
     return true;
@@ -615,9 +627,14 @@ function setSync(tipo, txt) {
 }
 
 async function sincronizarAhora() {
+  if (loginLocalActivo || !localStorage.getItem('deudas_logged_email')) {
+    setSync('', '💾 Local');
+    return;
+  }
+  setSync('warn', '☁️ Sincronizando…');
   const ok = await cargarDesdeSheet();
   if (ok === 'newer') { renderResumen(); renderLista(); aplicarTotales(); }
-  if (ok === 'error') setSync('err', '⚠️ Sin conexión');
+  if (ok === 'error') setSync('err', '⚠️ Sin conexión — datos locales');
   else setSync('ok', '☁️ Sincronizado');
 }
 
@@ -1962,7 +1979,8 @@ render();
     iniciarGoogleLogin();
     if (localStorage.getItem('deudas_logged') === '1') {
       if (localStorage.getItem('deudas_logged_email')) {
-        trasLogin();
+        ocultarLogin();
+        setSync('warn', '☁️ Pulsa para sincronizar');
       } else {
         loginLocalActivo = true;
         setSync('', '💾 Local');
