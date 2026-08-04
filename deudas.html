@@ -467,6 +467,15 @@ function loginGoogle() {
   gTokenClient.requestAccessToken();
 }
 
+function decodificarJWT(token) {
+  try {
+    let base64 = String(token).split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
+    const pad = base64.length % 4;
+    if (pad) base64 += '='.repeat(4 - pad);
+    return JSON.parse(atob(base64));
+  } catch (e) { return {}; }
+}
+
 function onTokenResp(resp) {
   const errEl = document.getElementById('login-error');
   if (!resp || resp.error || !resp.access_token) {
@@ -474,12 +483,7 @@ function onTokenResp(resp) {
     errEl.style.display = 'block';
     return;
   }
-  let payload = {};
-  try {
-    if (resp.id_token) {
-      payload = JSON.parse(atob(resp.id_token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')));
-    }
-  } catch (e) {}
+  const payload = decodificarJWT(resp.id_token || '');
   if (!estaAutorizado(payload.email)) {
     errEl.textContent = 'El correo "' + (payload.email || 'desconocido') + '" no está autorizado para acceder.';
     errEl.style.display = 'block';
