@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><circle cx='16' cy='16' r='14' fill='%232e7d32'/><circle cx='16' cy='16' r='8' fill='%23fff'/><text x='16' y='22' font-size='16' text-anchor='middle' fill='%232e7d32' font-family='Arial' font-weight='bold'>S</text></svg>">
-<title>Control de Deudas</title>
+<title>Control de Saldo Pendiente</title>
 <style>
 :root {
   --bg: #eef1f5; --bg2: #ffffff; --bg3: #f7f8fc; --bg4: #edeff5; --bg5: #f5f6fa;
@@ -224,7 +224,7 @@ footer { text-align: center; padding: 1.8rem 1rem 2.2rem; color: var(--text3); f
 <div id="login-screen">
   <div class="login-box">
     <div class="login-logo">💸</div>
-    <h2>Control de Deudas</h2>
+    <h2>Control de Saldo Pendiente</h2>
     <p class="login-sub">Inicia sesión para continuar</p>
     <div id="login-error" style="display:none;">Este correo no está autorizado para acceder.</div>
     <div id="g-signin-wrap"></div>
@@ -243,7 +243,7 @@ footer { text-align: center; padding: 1.8rem 1rem 2.2rem; color: var(--text3); f
   <div class="brand">
     <div class="brand-logo">💸</div>
     <div>
-      <h1>Control de Deudas</h1>
+      <h1>Control de Saldo Pendiente</h1>
       <span class="brand-sub">Préstamos · Intereses · Cobros</span>
     </div>
   </div>
@@ -289,7 +289,7 @@ footer { text-align: center; padding: 1.8rem 1rem 2.2rem; color: var(--text3); f
   </div>
 </div>
 
-<footer>Control de Deudas · Los datos se guardan localmente en este navegador</footer>
+<footer>Control de Saldo Pendiente · Los datos se guardan localmente en este navegador</footer>
 
 <!-- MODAL NUEVA/EDITAR DEUDA -->
 <div id="modal-deuda" class="modal" style="display:none;">
@@ -1332,7 +1332,7 @@ function exportarPDF(id, solo) {
 
   doc.setFontSize(8);
   doc.setTextColor(140, 140, 140);
-  doc.text('Documento generado automáticamente — Control de Deudas', M, doc.internal.pageSize.getHeight() - 8);
+  doc.text('Documento generado automáticamente — Control de Saldo Pendiente', M, doc.internal.pageSize.getHeight() - 8);
 
   mostrarPreviewPDF(doc, 'deuda_' + (d.nombre || 'deudor').replace(/\s+/g, '_') + '.pdf', id, solo);
 }
@@ -1585,7 +1585,7 @@ function exportarPDFWhatsApp(id, solo) {
 
   doc.setFontSize(9);
   doc.setTextColor(140, 140, 140);
-  doc.text('Versión para WhatsApp — Control de Deudas', M, doc.internal.pageSize.getHeight() - 20);
+  doc.text('Versión para WhatsApp — Control de Saldo Pendiente', M, doc.internal.pageSize.getHeight() - 20);
 
   mostrarPreviewPDF(doc, 'deuda_whatsapp_' + (d.nombre || 'deudor').replace(/\s+/g, '_') + '.pdf', id, solo);
 }
@@ -1925,7 +1925,7 @@ function generarPDF(){
   }
   doc.setFontSize(7);
   doc.setTextColor(140,140,140);
-  doc.text('Control de Deudas', M, H - 14);
+  doc.text('Control de Saldo Pendiente', M, H - 14);
   var nombreArchivo = 'resumen_' + (d.nombre || 'deudor').replace(/\\s+/g,'_') + '.pdf';
   var dataUri = doc.output('datauristring');
   var vw = window.open('', '_blank');
