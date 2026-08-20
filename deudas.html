@@ -1203,7 +1203,7 @@ function exportarPDF(id, solo) {
   doc.setTextColor(30, 30, 46);
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(13);
-  doc.text('Deudor: ' + (d.nombre || ''), M, y); y += 6;
+  doc.text('Prestatario: ' + (d.nombre || ''), M, y); y += 6;
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(10);
   if (multi) { doc.text('Préstamos registrados: ' + lista.length, M, y); y += 5; }
@@ -1472,7 +1472,7 @@ function exportarPDFWhatsApp(id, solo) {
   doc.text('REPORTE DE SALDO PENDIENTE', M, 24);
   doc.setFontSize(9);
   doc.setFont('helvetica', 'normal');
-  doc.text('Deudor: ' + (d.nombre || ''), M, 38);
+  doc.text('Prestatario: ' + (d.nombre || ''), M, 38);
   doc.setFontSize(7.5);
   const inicioTxt = multi ? ('Préstamos: ' + lista.length + '   •   ') : (d.fechaInicio ? 'Inicio: ' + fmtFecha(d.fechaInicio) + '   •   ' : '');
   doc.text(inicioTxt + 'Emisión: ' + new Date().toLocaleDateString('es-PE', { day: '2-digit', month: 'long', year: 'numeric' }), M, 50);
@@ -1873,7 +1873,7 @@ function generarPDF(){
   doc.text('REPORTE DE SALDO PENDIENTE', M, 24);
   doc.setFontSize(9);
   doc.setFont('helvetica','normal');
-  doc.text('Deudor: ' + d.nombre, M, 38);
+  doc.text('Prestatario: ' + d.nombre, M, 38);
   doc.setFontSize(7.5);
   doc.text((d.fechaInicio ? 'Inicio: ' + fmtFecha(d.fechaInicio) + '   •   ' : '') + 'Emisión: ' + new Date().toLocaleDateString('es-PE',{day:'2-digit',month:'long',year:'numeric'}), M, 50);
   y = 74;
