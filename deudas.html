@@ -295,7 +295,7 @@ footer { text-align: center; padding: 1.8rem 1rem 2.2rem; color: var(--text3); f
 <div id="modal-deuda" class="modal" style="display:none;">
   <div class="modal-content small">
     <div class="modal-header">
-      <h2 id="modal-deuda-title">Nueva deuda</h2>
+      <h2 id="modal-deuda-title">Nuevo saldo pendiente</h2>
       <button class="modal-close" onclick="cerrarModal('modal-deuda')">&times;</button>
     </div>
     <div class="modal-body">
@@ -321,7 +321,7 @@ footer { text-align: center; padding: 1.8rem 1rem 2.2rem; color: var(--text3); f
         <div class="form-group full"><label>Notas / acuerdos</label><textarea id="d_notas" placeholder="Acuerdos, condiciones, avales..."></textarea></div>
       </div>
       <p class="nota" id="d_nota_interes">💡 Intereses: <strong>10%</strong> si paga hasta 7 días · <strong>20%</strong> hasta 15 días · <strong>30% por mes</strong> después.</p>
-      <p class="nota" id="d_nota_especial" style="display:none;">⭐ Préstamo especial sin interés: el <strong>monto fijo</strong> que pongas (0 o el valor que elijas) se mantiene igual hasta el pago de la deuda.</p>
+      <p class="nota" id="d_nota_especial" style="display:none;">⭐ Préstamo especial sin interés: el <strong>monto fijo</strong> que pongas (0 o el valor que elijas) se mantiene igual hasta el pago del saldo pendiente.</p>
     </div>
     <div class="modal-footer">
       <button class="btn btn-danger" id="d_btn_delete" style="display:none;margin-right:auto;" onclick="eliminarDeuda()">🗑 Eliminar</button>
@@ -420,7 +420,7 @@ footer { text-align: center; padding: 1.8rem 1rem 2.2rem; color: var(--text3); f
     </div>
     <div class="modal-footer" style="flex-wrap:wrap;align-items:center;">
       <label class="pdf-excluir" style="display:flex;align-items:center;gap:.5rem;font-size:.9rem;cursor:pointer;margin-right:auto;">
-        <input type="checkbox" id="excluir-liquidadas" onchange="toggleExcluirLiquidadas()"> Excluir deudas liquidadas del resumen
+        <input type="checkbox" id="excluir-liquidadas" onchange="toggleExcluirLiquidadas()"> Excluir préstamos liquidados del resumen
       </label>
       <span style="display:flex;gap:.5rem;flex-wrap:wrap;">
         <button class="btn btn-success" onclick="exportarPDFWhatsApp(pdfDeudorId, pdfSolo)">📱 Versión WhatsApp</button>
@@ -735,7 +735,7 @@ function renderResumen() {
   const activos = gruposPersonas().filter(g => calcularPersona(g).total > 0).length;
   const card = (label, value, sub, extra, icon) => `<div class="card ${extra || ''}"><div class="icon">${icon}</div><div class="label">${label}</div><div class="value">${value}</div><div class="sub">${sub}</div></div>`;
   document.getElementById('cards-resumen').innerHTML =
-    card('Personas', personas, activos + ' con deuda pendiente', '', '👥') +
+    card('Personas', personas, activos + ' con saldo pendiente', '', '👥') +
     card('Capital pendiente', fmt(totalCapital), 'Total por cobrar sin intereses', '', '💵') +
     card('Interés pendiente', fmt(totalInteres), 'Interés generado no pagado', 'warn-card', '📈') +
     card('Total a cobrar', fmt(totalGlobal), 'Capital + intereses', 'total', '💰') +
@@ -764,7 +764,7 @@ function renderLista() {
   if (!grupos.length) { document.getElementById('tabla-wrapper').innerHTML = ''; return; }
 
   let html = `<table><thead><tr>
-    <th>Persona</th><th>Inicio</th><th>Préstamos</th><th>Tipo de cobro</th><th class="num">Capital</th><th class="num">Int. pendiente</th><th class="num">Total deuda</th><th>Estado</th><th>Acciones</th>
+    <th>Persona</th><th>Inicio</th><th>Préstamos</th><th>Tipo de cobro</th><th class="num">Capital</th><th class="num">Int. pendiente</th><th class="num">Total saldo pendiente</th><th>Estado</th><th>Acciones</th>
   </tr></thead><tbody>`;
 
   grupos.forEach(g => {
@@ -813,7 +813,7 @@ function renderLista() {
       <td data-label="Tipo de cobro">${tipo}</td>
       <td data-label="Capital" class="num">${fmt(p.saldoCapital)}</td>
       <td data-label="Int. pendiente" class="num">${fmt(p.interesPendiente)}</td>
-      <td data-label="Total deuda" class="num"><strong>${fmt(p.total)}</strong></td>
+      <td data-label="Total saldo pendiente" class="num"><strong>${fmt(p.total)}</strong></td>
       <td data-label="Estado"><span class="badge ${badgeEst}">${estado}</span></td>
       <td data-label="Acciones"><div class="actions-cell">
         <button class="btn btn-primary btn-sm" onclick="abrirDetalle('${d.id}')">👁 Ver</button>
@@ -852,7 +852,7 @@ function abrirModal(id) { document.getElementById(id).style.display = 'flex'; }
 function cerrarModal(id) { document.getElementById(id).style.display = 'none'; if (id === 'modal-detalle') { renderLista(); renderResumen(); } }
 
 function nuevaDeuda() {
-  document.getElementById('modal-deuda-title').textContent = 'Nueva deuda';
+  document.getElementById('modal-deuda-title').textContent = 'Nuevo saldo pendiente';
   document.getElementById('d_id').value = '';
   document.getElementById('d_nombre').value = '';
   document.getElementById('d_telefono').value = '';
@@ -900,7 +900,7 @@ function nuevoPrestamo(id) {
 function editarDeuda(id) {
   const d = db.deudores.find(x => x.id === id);
   if (!d) return;
-  document.getElementById('modal-deuda-title').textContent = 'Editar deuda';
+  document.getElementById('modal-deuda-title').textContent = 'Editar saldo pendiente';
   document.getElementById('d_id').value = d.id;
   document.getElementById('d_nombre').value = d.nombre || '';
   document.getElementById('d_telefono').value = d.telefono || '';
@@ -940,7 +940,7 @@ function guardarDeuda() {
 }
 function eliminarDeuda() {
   const id = document.getElementById('d_id').value;
-  if (!confirm('¿Eliminar esta deuda y todo su historial?')) return;
+  if (!confirm('¿Eliminar este saldo pendiente y todo su historial?')) return;
   db.deudores = db.deudores.filter(x => x.id !== id);
   guardar();
   cerrarModal('modal-deuda');
@@ -1006,7 +1006,7 @@ function renderDetalle() {
   let cards = '';
   if (todos) {
     cards = `
-      <div class="detail-card main"><div class="label">Total deuda (suma)</div><div class="value">${fmt(p.total)}</div></div>
+      <div class="detail-card main"><div class="label">Total saldo pendiente (suma)</div><div class="value">${fmt(p.total)}</div></div>
       <div class="detail-card"><div class="label">Monto prestado</div><div class="value">${fmt(p.monto)}</div></div>
       <div class="detail-card"><div class="label">Capital pendiente</div><div class="value">${fmt(p.saldoCapital)}</div></div>
       <div class="detail-card"><div class="label">Interés pendiente</div><div class="value">${fmt(p.interesPendiente)}</div></div>
@@ -1017,7 +1017,7 @@ function renderDetalle() {
   } else {
     const individual = multi;
     cards = `
-      <div class="detail-card main"><div class="label">${individual ? 'Total deuda (este préstamo)' : 'Total deuda'}</div><div class="value">${fmt(c.total)}</div></div>
+      <div class="detail-card main"><div class="label">${individual ? 'Total saldo pendiente (este préstamo)' : 'Total saldo pendiente'}</div><div class="value">${fmt(c.total)}</div></div>
       <div class="detail-card"><div class="label">Monto prestado</div><div class="value">${fmt(c.monto)}</div></div>
       <div class="detail-card"><div class="label">Capital pendiente</div><div class="value">${fmt(c.saldoCapital)}</div></div>
       <div class="detail-card"><div class="label">Interés pendiente</div><div class="value">${fmt(c.interesPendiente)}</div></div>
@@ -1172,7 +1172,7 @@ function exportarPDF(id, solo) {
   let lista = single ? [single] : personaDeudores(id);
   if (!lista.length) return;
   if (excluirLiquidadas) lista = lista.filter(ld => !calcularDeudor(ld).completo);
-  if (!lista.length) { alert('No hay deudas pendientes para este deudor.'); return; }
+  if (!lista.length) { alert('No hay saldo pendiente para este deudor.'); return; }
   const p = calcularPersona(lista);
   const d = lista[0];
   const multi = lista.length > 1;
@@ -1317,24 +1317,24 @@ function exportarPDF(id, solo) {
     y = doc.lastAutoTable.finalY + 10;
   }
 
-  // Total deuda
+  // Total saldo pendiente
   checkPage();
   doc.setFillColor(27, 94, 32);
   doc.roundedRect(M, y, W, 32, 2, 2, 'F');
   doc.setTextColor(255, 255, 255);
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(11);
-  doc.text('RESUMEN DE LA DEUDA', M + 4, y + 8);
+  doc.text('RESUMEN DE SALDO PENDIENTE', M + 4, y + 8);
   doc.setFontSize(10);
   doc.text('Capital pendiente: ' + fmt(p.saldoCapital) + '    Interés pendiente: ' + fmt(p.interesPendiente), M + 4, y + 16);
   doc.setFontSize(13);
-  doc.text('TOTAL DE LA DEUDA: ' + fmt(p.total), M + 4, y + 25);
+  doc.text('TOTAL DE SALDO PENDIENTE: ' + fmt(p.total), M + 4, y + 25);
 
   doc.setFontSize(8);
   doc.setTextColor(140, 140, 140);
   doc.text('Documento generado automáticamente — Control de Saldo Pendiente', M, doc.internal.pageSize.getHeight() - 8);
 
-  mostrarPreviewPDF(doc, 'deuda_' + (d.nombre || 'deudor').replace(/\s+/g, '_') + '.pdf', id, solo);
+  mostrarPreviewPDF(doc, 'saldo_pendiente_' + (d.nombre || 'deudor').replace(/\s+/g, '_') + '.pdf', id, solo);
 }
 
 let pdfActual = null;
@@ -1443,7 +1443,7 @@ function exportarPDFWhatsApp(id, solo) {
   let lista = single ? [single] : personaDeudores(id);
   if (!lista.length) return;
   if (excluirLiquidadas) lista = lista.filter(ld => !calcularDeudor(ld).completo);
-  if (!lista.length) { alert('No hay deudas pendientes para este deudor.'); return; }
+  if (!lista.length) { alert('No hay saldo pendiente para este deudor.'); return; }
   const p = calcularPersona(lista);
   const d = lista[0];
   const multi = lista.length > 1;
@@ -1504,7 +1504,7 @@ function exportarPDFWhatsApp(id, solo) {
       multi ? fmt(p.interesPendiente) : d.especial ? fmt(c.interesPendiente) : c.tasa.corto + ' = ' + fmt(c.interesPendiente));
   row('Capital pendiente', fmt(p.saldoCapital));
   row('Total pagado', fmt(p.totalPagado));
-  row('TOTAL DEUDA', fmt(p.total), true);
+  row('TOTAL SALDO PENDIENTE', fmt(p.total), true);
   y += 6;
   checkPage();
 
@@ -1587,7 +1587,7 @@ function exportarPDFWhatsApp(id, solo) {
   doc.setTextColor(140, 140, 140);
   doc.text('Versión para WhatsApp — Control de Saldo Pendiente', M, doc.internal.pageSize.getHeight() - 20);
 
-  mostrarPreviewPDF(doc, 'deuda_whatsapp_' + (d.nombre || 'deudor').replace(/\s+/g, '_') + '.pdf', id, solo);
+  mostrarPreviewPDF(doc, 'saldo_pendiente_whatsapp_' + (d.nombre || 'deudor').replace(/\s+/g, '_') + '.pdf', id, solo);
 }
 
 // ============== CALCULADORA (pestaña aparte) ==============
@@ -1798,7 +1798,7 @@ select:focus { outline:none; border-color:#2e7d32; box-shadow:0 0 0 3px rgba(46,
       <div class="kv"><span class="k">Interés pendiente</span><span class="v" id="v_int">—</span></div>
       <div class="kv"><span class="k">Capital pendiente</span><span class="v" id="v_cap">—</span></div>
       <div class="kv"><span class="k">Total pagado</span><span class="v" id="v_pag">—</span></div>
-      <div class="total"><span class="t">Total de la deuda</span><span class="m" id="v_total">—</span></div>
+      <div class="total"><span class="t">Total del saldo pendiente</span><span class="m" id="v_total">—</span></div>
       <div class="pagos" id="v_pagos"></div>
       <div class="actions">
         <button class="btn-pdf" onclick="generarPDF()">📄 Generar PDF</button>
@@ -1894,7 +1894,7 @@ function generarPDF(){
   row(d.especial ? 'Interés fijo' : 'Interés pendiente', fmt(d.interesPendiente));
   row('Capital pendiente', fmt(d.saldoCapital));
   row('Total pagado', fmt(d.totalPagado));
-  row('TOTAL DEUDA', fmt(d.total), true);
+  row('TOTAL SALDO PENDIENTE', fmt(d.total), true);
   y += 6;
   checkPage();
   if(d.notas){
