@@ -1187,7 +1187,7 @@ function exportarPDF(id, solo) {
   doc.setTextColor(255, 255, 255);
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(16);
-  doc.text('REPORTE DE DEUDA', M, 12);
+  doc.text('REPORTE DE SALDO PENDIENTE', M, 12);
   doc.setFontSize(10);
   doc.setFont('helvetica', 'normal');
   doc.text(db.titular ? 'Titular: ' + db.titular : '', M, 20);
@@ -1455,7 +1455,7 @@ function exportarPDFWhatsApp(id, solo) {
   doc.setTextColor(255, 255, 255);
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(15);
-  doc.text('REPORTE DE DEUDA', M, 24);
+  doc.text('REPORTE DE SALDO PENDIENTE', M, 24);
   doc.setFontSize(9);
   doc.setFont('helvetica', 'normal');
   doc.text('Deudor: ' + (d.nombre || ''), M, 38);
@@ -1856,7 +1856,7 @@ function generarPDF(){
   doc.setTextColor(255,255,255);
   doc.setFont('helvetica','bold');
   doc.setFontSize(15);
-  doc.text('REPORTE DE DEUDA', M, 24);
+  doc.text('REPORTE DE SALDO PENDIENTE', M, 24);
   doc.setFontSize(9);
   doc.setFont('helvetica','normal');
   doc.text('Deudor: ' + d.nombre, M, 38);
