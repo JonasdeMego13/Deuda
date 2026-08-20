@@ -418,11 +418,16 @@ footer { text-align: center; padding: 1.8rem 1rem 2.2rem; color: var(--text3); f
     <div class="modal-body modal-pdf-body">
       <iframe id="pdf-preview-frame" style="width:100%;height:100%;border:none;border-radius:var(--radius-sm);background:#fff;"></iframe>
     </div>
-    <div class="modal-footer">
-      <button class="btn btn-success" onclick="exportarPDFWhatsApp(pdfDeudorId, pdfSolo)">📱 Versión WhatsApp</button>
-      <button class="btn btn-secondary" onclick="copiarPDFImagen()">🖼 Copiar imagen</button>
-      <button class="btn btn-secondary" onclick="imprimirPDF()">🖨 Imprimir</button>
-      <button class="btn btn-primary" onclick="descargarPDF()">⬇ Descargar</button>
+    <div class="modal-footer" style="flex-wrap:wrap;align-items:center;">
+      <label class="pdf-excluir" style="display:flex;align-items:center;gap:.5rem;font-size:.9rem;cursor:pointer;margin-right:auto;">
+        <input type="checkbox" id="excluir-liquidadas" onchange="toggleExcluirLiquidadas()"> Excluir deudas liquidadas del resumen
+      </label>
+      <span style="display:flex;gap:.5rem;flex-wrap:wrap;">
+        <button class="btn btn-success" onclick="exportarPDFWhatsApp(pdfDeudorId, pdfSolo)">📱 Versión WhatsApp</button>
+        <button class="btn btn-secondary" onclick="copiarPDFImagen()">🖼 Copiar imagen</button>
+        <button class="btn btn-secondary" onclick="imprimirPDF()">🖨 Imprimir</button>
+        <button class="btn btn-primary" onclick="descargarPDF()">⬇ Descargar</button>
+      </span>
     </div>
   </div>
 </div>
@@ -1164,8 +1169,10 @@ function toggleTema() {
 // ============== PDF ==============
 function exportarPDF(id, solo) {
   const single = solo ? db.deudores.find(x => x.id === id) : null;
-  const lista = single ? [single] : personaDeudores(id);
+  let lista = single ? [single] : personaDeudores(id);
   if (!lista.length) return;
+  if (excluirLiquidadas) lista = lista.filter(ld => !calcularDeudor(ld).completo);
+  if (!lista.length) { alert('No hay deudas pendientes para este deudor.'); return; }
   const p = calcularPersona(lista);
   const d = lista[0];
   const multi = lista.length > 1;
@@ -1334,6 +1341,11 @@ let pdfActual = null;
 let pdfNombre = '';
 let pdfDeudorId = null;
 let pdfSolo = false;
+let excluirLiquidadas = false;
+function toggleExcluirLiquidadas() {
+  excluirLiquidadas = document.getElementById('excluir-liquidadas').checked;
+  if (pdfDeudorId != null) exportarPDF(pdfDeudorId, pdfSolo);
+}
 function mostrarPreviewPDF(doc, nombre, id, solo) {
   pdfActual = doc;
   pdfNombre = nombre;
@@ -1428,8 +1440,10 @@ function imprimirPDF() {
 // ============== PDF VERSIÓN WHATSAPP ==============
 function exportarPDFWhatsApp(id, solo) {
   const single = solo ? db.deudores.find(x => x.id === id) : null;
-  const lista = single ? [single] : personaDeudores(id);
+  let lista = single ? [single] : personaDeudores(id);
   if (!lista.length) return;
+  if (excluirLiquidadas) lista = lista.filter(ld => !calcularDeudor(ld).completo);
+  if (!lista.length) { alert('No hay deudas pendientes para este deudor.'); return; }
   const p = calcularPersona(lista);
   const d = lista[0];
   const multi = lista.length > 1;
