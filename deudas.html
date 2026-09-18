@@ -1216,13 +1216,17 @@ function exportarPDF(id, solo) {
   if (multi) {
     lista.forEach((ld, i) => {
       const lc = calcularDeudor(ld);
+      const esEspecialCero = ld.especial && !(+lc.interesGenerado);
       const interesTag = ld.especial ? 'Especial' : lc.tasa.corto;
-      leyendaLines.push('• Préstamo ' + (i + 1) + ' (' + fmtFecha(ld.fechaInicio) + '): ' + fmt(lc.monto) + ' + ' + fmt(lc.interesGenerado) + ' (' + interesTag + ') - ' + fmt(lc.totalPagado) + ' pagado = ' + fmt(lc.total));
+      const interesPart = esEspecialCero ? '' : ' + ' + fmt(lc.interesGenerado) + ' (' + interesTag + ')';
+      leyendaLines.push('• Préstamo ' + (i + 1) + ' (' + fmtFecha(ld.fechaInicio) + '): ' + fmt(lc.monto) + interesPart + ' - ' + fmt(lc.totalPagado) + ' pagado = ' + fmt(lc.total));
     });
   } else {
     const lc = calcularDeudor(d);
+    const esEspecialCero = d.especial && !(+lc.interesGenerado);
     const interesTag = d.especial ? 'Especial' : lc.tasa.corto;
-    leyendaLines.push('• Préstamo (' + fmtFecha(d.fechaInicio) + '): ' + fmt(lc.monto) + ' + ' + fmt(lc.interesGenerado) + ' (' + interesTag + ') - ' + fmt(lc.totalPagado) + ' pagado = ' + fmt(lc.total));
+    const interesPart = esEspecialCero ? '' : ' + ' + fmt(lc.interesGenerado) + ' (' + interesTag + ')';
+    leyendaLines.push('• Préstamo (' + fmtFecha(d.fechaInicio) + '): ' + fmt(lc.monto) + interesPart + ' - ' + fmt(lc.totalPagado) + ' pagado = ' + fmt(lc.total));
     if (!d.especial) leyendaLines.push('• Interés vigente: ' + lc.tasa.label);
   }
   const leyendaWrapped = [];
@@ -1526,8 +1530,10 @@ function exportarPDFWhatsApp(id, solo) {
     doc.setFontSize(8.5);
     lista.forEach(ld => {
       const lc = calcularDeudor(ld);
+      const esEspecialCero = ld.especial && !(+lc.interesGenerado);
       const tag = ld.especial ? 'Especial' : lc.tasa.corto;
-      const line = '• ' + fmtFecha(ld.fechaInicio) + ' · ' + fmt(lc.monto) + ' + ' + fmt(lc.interesGenerado) + ' (' + tag + ') - ' + fmt(lc.totalPagado) + ' = ' + fmt(lc.total);
+      const interesPart = esEspecialCero ? '' : ' + ' + fmt(lc.interesGenerado) + ' (' + tag + ')';
+      const line = '• ' + fmtFecha(ld.fechaInicio) + ' · ' + fmt(lc.monto) + interesPart + ' - ' + fmt(lc.totalPagado) + ' = ' + fmt(lc.total);
       const wrapped = doc.splitTextToSize(line, MW);
       wrapped.forEach(w => { doc.text(w, M, y); y += 11; checkPage(); });
     });
