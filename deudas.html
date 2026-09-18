@@ -1210,29 +1210,37 @@ function exportarPDF(id, solo) {
   if (!multi && d.fechaInicio) { doc.text('Fecha de inicio del préstamo: ' + fmtFecha(d.fechaInicio), M, y); y += 5; }
   doc.text('Estado: ' + est + '   •   Fecha de emisión: ' + new Date().toLocaleDateString('es-PE', { day: '2-digit', month: 'long', year: 'numeric' }), M, y); y += 8;
 
-  // Leyenda de intereses
+  // Leyenda de intereses — Detalle por préstamo: monto + interés - pagado = total
   const leyendaLines = [];
   leyendaLines.push('• Monto prestado total: ' + fmt(p.monto));
   if (multi) {
     lista.forEach((ld, i) => {
       const lc = calcularDeudor(ld);
-      leyendaLines.push('• Préstamo ' + (i + 1) + ' (' + fmtFecha(ld.fechaInicio) + '): ' + (ld.especial ? 'Especial — monto fijo ' + fmt(lc.interesGenerado) : 'interés ' + lc.tasa.label));
+      const interesTag = ld.especial ? 'Especial' : lc.tasa.corto;
+      leyendaLines.push('• Préstamo ' + (i + 1) + ' (' + fmtFecha(ld.fechaInicio) + '): ' + fmt(lc.monto) + ' + ' + fmt(lc.interesGenerado) + ' (' + interesTag + ') - ' + fmt(lc.totalPagado) + ' pagado = ' + fmt(lc.total));
     });
-  } else if (!d.especial) {
-    leyendaLines.push('• Interés vigente: ' + calcularDeudor(d).tasa.label);
+  } else {
+    const lc = calcularDeudor(d);
+    const interesTag = d.especial ? 'Especial' : lc.tasa.corto;
+    leyendaLines.push('• Préstamo (' + fmtFecha(d.fechaInicio) + '): ' + fmt(lc.monto) + ' + ' + fmt(lc.interesGenerado) + ' (' + interesTag + ') - ' + fmt(lc.totalPagado) + ' pagado = ' + fmt(lc.total));
+    if (!d.especial) leyendaLines.push('• Interés vigente: ' + lc.tasa.label);
   }
+  const leyendaWrapped = [];
+  leyendaLines.forEach(l => { leyendaWrapped.push(...doc.splitTextToSize(l, W - 8)); });
   doc.setFillColor(237, 239, 245);
   doc.setDrawColor(226, 229, 238);
   doc.setLineWidth(0.3);
-  const bh = 6 + leyendaLines.length * 5 + 4;
+  const bh = 6 + leyendaWrapped.length * 5 + 4;
+  checkPage();
+  if (y + bh > PH - 10) { doc.addPage(); y = 20; }
   doc.roundedRect(M, y, W, bh, 2, 2, 'FD');
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(11);
   doc.text('Leyenda de intereses', M + 4, y + 7);
   doc.setFont('helvetica', 'normal');
-  doc.setFontSize(9.5);
+  doc.setFontSize(8.5);
   let ly = y + 13;
-  leyendaLines.forEach(l => { doc.text(l, M + 4, ly); ly += 5; });
+  leyendaWrapped.forEach(l => { doc.text(l, M + 4, ly); ly += 5; });
   y += bh + 2;
 
   // Notas / acuerdos (todas las de la persona)
@@ -1518,9 +1526,10 @@ function exportarPDFWhatsApp(id, solo) {
     doc.setFontSize(8.5);
     lista.forEach(ld => {
       const lc = calcularDeudor(ld);
-      doc.text('• ' + fmtFecha(ld.fechaInicio) + ' · ' + (ld.especial ? 'Especial' : lc.tasa.corto) + ' · ' + fmt(lc.total), M, y);
-      y += 11;
-      checkPage();
+      const tag = ld.especial ? 'Especial' : lc.tasa.corto;
+      const line = '• ' + fmtFecha(ld.fechaInicio) + ' · ' + fmt(lc.monto) + ' + ' + fmt(lc.interesGenerado) + ' (' + tag + ') - ' + fmt(lc.totalPagado) + ' = ' + fmt(lc.total);
+      const wrapped = doc.splitTextToSize(line, MW);
+      wrapped.forEach(w => { doc.text(w, M, y); y += 11; checkPage(); });
     });
     y += 8;
     checkPage();
