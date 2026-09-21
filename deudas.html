@@ -250,6 +250,7 @@ footer { text-align: center; padding: 1.8rem 1rem 2.2rem; color: var(--text3); f
   <nav>
     <button onclick="abrirCalculadora()">🧮 Calculadora</button>
     <button onclick="abrirResumenDeudor()">📊 Resumen</button>
+    <button onclick="exportarHojaCSV()">📥 Exportar hoja</button>
     <span class="sync-badge" id="sync-status" title="Estado de sincronización — pulsa para sincronizar" onclick="sincronizarAhora()" style="cursor:pointer;">☁️ —</span>
     <button onclick="logout()">🚪 Salir</button>
     <button onclick="toggleTema()" id="tema-btn">🌙</button>
@@ -2008,6 +2009,49 @@ render();
   if (!w) { alert('Permite las ventanas emergentes para abrir el resumen.'); return; }
   w.document.write(html);
   w.document.close();
+}
+
+// ============== EXPORTAR HOJA DE CÁLCULO (CSV ordenado) ==============
+function exportarHojaCSV() {
+  if (!db || !db.deudores || !db.deudores.length) { alert('No hay datos para exportar.'); return; }
+  const escCSV = v => '"' + String(v == null ? '' : v).replace(/"/g, '""') + '"';
+  // Hoja 1: Préstamos
+  let csv1 = ['ID', 'Persona', 'Telefono', 'Monto', 'FechaInicio', 'Especial', 'InteresFijo', 'TipoCobro', 'Notas', 'Dias', 'Tasa', 'InteresGenerado', 'InteresPendiente', 'SaldoCapital', 'Total', 'TotalPagado', 'Estado'].map(escCSV).join(',') + '\n';
+  db.deudores.forEach(d => {
+    const c = calcularDeudor(d);
+    const est = c.completo ? 'Liquidado' : c.total > 0 ? 'Pendiente' : 'Al dia';
+    csv1 += [d.id, d.nombre, d.telefono, d.monto, d.fechaInicio, d.especial ? 'SI' : 'NO', d.interesFijo || 0, d.tipoCobro, (d.notas || '').replace(/\n/g, ' | '), c.dias, d.especial ? 'Fijo' : c.tasa.corto, c.interesGenerado.toFixed(2), c.interesPendiente.toFixed(2), c.saldoCapital.toFixed(2), c.total.toFixed(2), c.totalPagado.toFixed(2), est].map(escCSV).join(',') + '\n';
+  });
+  // Hoja 2: Pagos (en mismo CSV separado por seccion)
+  let csv2 = '\n' + ['PrestamoID', 'Persona', 'PagoID', 'Fecha', 'Monto', 'Metodo', 'Tipo', 'Nota'].map(escCSV).join(',') + '\n';
+  db.deudores.forEach(d => {
+    (d.pagos || []).forEach(p => {
+      csv2 += [d.id, d.nombre, p.id, p.fecha, p.monto, p.metodo, p.tipo, (p.nota || '').replace(/\n/g, ' | ')].map(escCSV).join(',') + '\n';
+    });
+  });
+  // Hoja 3: Tramites
+  let csv3 = '\n' + ['PrestamoID', 'Persona', 'TramiteID', 'Fecha', 'Texto'].map(escCSV).join(',') + '\n';
+  db.deudores.forEach(d => {
+    (d.tramites || []).forEach(t => {
+      csv3 += [d.id, d.nombre, t.id, t.fecha, (t.texto || '').replace(/\n/g, ' | ')].map(escCSV).join(',') + '\n';
+    });
+  });
+  const full = csv1 + csv2 + csv3;
+  const blob = new Blob([full], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'deudas_export_' + new Date().toISOString().slice(0,10) + '.csv';
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+// Para usar la hoja en otra web: el CSV es compatible con Google Sheets / Excel.
+// También puedes copiar el JSON completo al portapapeles:
+function copiarJSONCompleto() {
+  const txt = JSON.stringify(db, null, 2);
+  navigator.clipboard.writeText(txt).then(() => alert('JSON copiado al portapapeles (' + db.deudores.length + ' prestamos)')).catch(() => {
+    const w = window.open('', '_blank'); w.document.write('<pre>' + esc(txt) + '</pre>'); w.document.close();
+  });
 }
 
 // ============== INIT ==============
