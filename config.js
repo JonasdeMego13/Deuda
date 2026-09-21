@@ -14,6 +14,6 @@ const GOOGLE_ALLOWED_EMAILS = 'abantofloreslj@gmail.com';
 
 // ---- SINCRONIZACIÓN (Google Apps Script) ----
 // URL del Web App desplegado (termina en /exec)
-const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwyXE5zB6smHo_Y7R56T5Z4qK_fWsglJmv153EFGL2CLgefzFXRVE11eugANuzYJawHTw/exec';
+const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwKhmAfDXsKeNVUA_Dn-4Zk7_CQ4I7KzKuey3t5sxzr4Va12U69_FEC6usfcvmnrJ_jKg/exec';
 // Clave secreta compartida entre la app y el script (cámbiala por otra)
 const GOOGLE_SCRIPT_KEY = 'deudas2026';
