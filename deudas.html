@@ -492,11 +492,15 @@ async function onGoogleLogin(resp) {
 
 async function trasLogin() {
   ocultarLogin();
+  if (!debeSincronizar()) { setSync('', '💾 Local'); return; }
   setSync('warn', '☁️ Cargando datos…');
   const ok = await cargarDesdeSheet();
-  if (ok === 'newer') { renderResumen(); renderLista(); aplicarTotales(); }
-  if (ok === 'local' || ok === 'migrar') await subirDatosActuales();
-  if (ok === 'error') setSync('err', '⚠️ Sin conexión — datos locales');
+  if (ok === 'newer') { renderResumen(); renderLista(); aplicarTotales(); setSync('ok', '☁️ Sincronizado'); }
+  else if (ok === 'local' || ok === 'migrar') { const sub = await subirDatosActuales(); if (!sub) {/* escribir ya mostró error */} }
+  else if (ok === 'error') {
+    const det = (cargarDesdeSheet.lastError || '').slice(0,120);
+    setSync('err', '⚠️ ' + (det.includes('404') || det.includes('HTML') ? 'URL no válida (404)' : det || 'Sin conexión'));
+  }
 }
 
 function logout() {
@@ -533,8 +537,17 @@ const SCRIPT_URL = GOOGLE_SCRIPT_URL;
 let sincronizando = false;
 
 async function leerDesdeSheet() {
-  const r = await fetch(SCRIPT_URL + '?k=' + GOOGLE_SCRIPT_KEY);
-  const j = await r.json();
+  const r = await fetch(SCRIPT_URL + '?k=' + GOOGLE_SCRIPT_KEY, { cache: 'no-store' });
+  if (!r.ok) {
+    const txt = await r.text().catch(() => '');
+    throw new Error('HTTP ' + r.status + ' ' + r.statusText + (txt.slice(0,200) ? ' — ' + txt.slice(0,200) : ''));
+  }
+  const ct = (r.headers.get('content-type') || '').toLowerCase();
+  const txt = await r.text();
+  if (txt.trim().startsWith('<')) throw new Error('Respuesta HTML (404 o permisos) — revisa que el Web App esté desplegado como "Cualquiera" y la URL en config.js sea la de /exec. Preview: ' + txt.slice(0,200));
+  let j;
+  try { j = JSON.parse(txt); } catch (e) { throw new Error('JSON inválido: ' + e.message + ' — body: ' + txt.slice(0,300)); }
+  if (j && j.error) throw new Error('Script error: ' + j.error);
   if (j && j.db) return j.db;
   return null;
 }
@@ -545,16 +558,27 @@ async function escribirEnSheet() {
   try {
     const r = await fetch(SCRIPT_URL + '?k=' + GOOGLE_SCRIPT_KEY, {
       method: 'POST',
-      body: JSON.stringify(db)
+      body: JSON.stringify(db),
+      cache: 'no-store'
     });
-    const j = await r.json();
+    if (!r.ok) {
+      const txt = await r.text().catch(() => '');
+      throw new Error('HTTP ' + r.status + ' ' + txt.slice(0,300));
+    }
+    const txt = await r.text();
+    if (txt.trim().startsWith('<')) throw new Error('Respuesta HTML en POST (404/permisos) — ' + txt.slice(0,200));
+    let j;
+    try { j = JSON.parse(txt); } catch (e) { throw new Error('JSON inválido en POST: ' + txt.slice(0,300)); }
     if (j && j.ok) { setSync('ok', '☁️ Sincronizado'); return true; }
     console.error('Error de sincronización:', j && j.error);
-    setSync('err', '⚠️ No se pudo subir a la hoja');
+    setSync('err', '⚠️ No se pudo subir: ' + (j && j.error ? j.error : 'respuesta no ok'));
     return false;
   } catch (e) {
     console.error('Error de sincronización:', e);
-    setSync('err', '⚠️ Sin conexión — guardado local');
+    const msg = String(e.message || e);
+    if (msg.includes('404') || msg.includes('HTML')) setSync('err', '⚠️ URL no válida (404) — redespliega el Web App');
+    else if (msg.includes('Failed to fetch') || msg.includes('Network')) setSync('err', '⚠️ Sin conexión — revisa internet/adblock');
+    else setSync('err', '⚠️ Error sync: ' + msg.slice(0,80));
     return false;
   } finally {
     sincronizando = false;
@@ -565,6 +589,11 @@ async function cargarDesdeSheet() {
   try {
     const remoto = await leerDesdeSheet();
     if (!remoto) return 'migrar';
+    // Si el remoto no tiene deudores (DB corrupta por test), trátalo como migrar para no perder local
+    if (!Array.isArray(remoto.deudores)) {
+      console.warn('Remoto sin deudores[] — DB corrupta, se forzará push local', remoto);
+      return 'local';
+    }
     const tR = remoto.updatedAt || 0, tL = db.updatedAt || 0;
     if (tR > tL) {
       db = { deudores: remoto.deudores || [], moneda: remoto.moneda || 'S/', titular: remoto.titular || '', updatedAt: tR };
@@ -572,7 +601,12 @@ async function cargarDesdeSheet() {
       return 'newer';
     }
     return 'local';
-  } catch (e) { return 'error'; }
+  } catch (e) {
+    console.error('cargarDesdeSheet error:', e);
+    // guarda el error para mostrarlo en sincronizarAhora
+    cargarDesdeSheet.lastError = String(e.message || e);
+    return 'error';
+  }
 }
 
 async function subirDatosActuales() {
@@ -582,10 +616,14 @@ async function subirDatosActuales() {
 }
 
 let syncTimer = null;
+function debeSincronizar() {
+  // Solo sincroniza si entró con Google (tiene email), no con login local Jonas
+  return localStorage.getItem('deudas_logged') === '1' && !!localStorage.getItem('deudas_logged_email');
+}
 function guardar() {
   db.updatedAt = Date.now();
   localStorage.setItem(DB_KEY, JSON.stringify(db));
-  if (localStorage.getItem('deudas_logged') !== '1') return;
+  if (!debeSincronizar()) return;
   setSync('warn', '☁️ Guardando…');
   clearTimeout(syncTimer);
   syncTimer = setTimeout(escribirEnSheet, 2000);
@@ -599,12 +637,15 @@ function setSync(tipo, txt) {
 }
 
 async function sincronizarAhora() {
-  if (localStorage.getItem('deudas_logged') !== '1') return;
+  if (!debeSincronizar()) { setSync('err', '⚠️ Solo sincroniza con Google — entra con Google'); return; }
   setSync('warn', '☁️ Sincronizando…');
   const ok = await cargarDesdeSheet();
   if (ok === 'newer') { renderResumen(); renderLista(); aplicarTotales(); setSync('ok', '☁️ Sincronizado'); }
-  else if (ok === 'error') setSync('err', '⚠️ Sin conexión — datos locales');
-  else {
+  else if (ok === 'error') {
+    const det = (cargarDesdeSheet.lastError || '').slice(0,120);
+    setSync('err', '⚠️ ' + (det.includes('404') || det.includes('HTML') ? 'URL no válida (404)' : det || 'Sin conexión'));
+    console.error('sincronizarAhora error:', det);
+  } else {
     const subido = await subirDatosActuales();
     if (subido) { renderResumen(); renderLista(); aplicarTotales(); }
   }
