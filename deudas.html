@@ -1709,10 +1709,14 @@ function especular(id, solo) {
   const single = solo ? db.deudores.find(x => x.id === id) : null;
   let lista = single ? [single] : personaDeudores(id);
   if (!lista.length) return;
-  especularId = single ? single.id : (personaDeudores(id)[0] || {}).id;
+  // Siempre excluir liquidados del resumen especulado
+  const filtrada = lista.filter(ld => !calcularDeudor(ld).completo);
+  if (!filtrada.length) { alert('No hay saldo pendiente para especular (todos liquidados).'); return; }
+  lista = filtrada;
+  especularId = single ? single.id : lista[0].id;
   especularSolo = !!solo;
   const d = lista[0];
-  document.getElementById('espec-nombre').textContent = (d.nombre || '') + (d.telefono ? ' — ' + d.telefono : '') + (lista.length > 1 && !solo ? ' (' + lista.length + ' préstamos)' : '');
+  document.getElementById('espec-nombre').textContent = (d.nombre || '') + (d.telefono ? ' — ' + d.telefono : '') + (lista.length > 1 && !solo ? ' (' + lista.length + ' préstamos vigentes)' : '');
   const def = new Date(); def.setDate(def.getDate() + 30);
   document.getElementById('espec-fecha').value = def.toISOString().slice(0,10);
   document.getElementById('espec-fecha').min = hoy();
@@ -1725,6 +1729,8 @@ function renderEspecular() {
   const single = especularSolo ? db.deudores.find(x => x.id === especularId) : null;
   let lista = single ? [single] : personaDeudores(especularId);
   if (!lista.length) return;
+  lista = lista.filter(ld => !calcularDeudor(ld).completo);
+  if (!lista.length) { document.getElementById('espec-result').innerHTML = '<div class="empty-msg">No hay préstamos vigentes para especular.</div>'; return; }
   const esEspecialMulti = lista.every(x => x.especial);
   let html = '<div style="display:grid;gap:.5rem;">';
   let totalMonto = 0, totalInteresPend = 0, totalSaldoCap = 0, totalFinal = 0, totalPagado = 0;
@@ -1756,6 +1762,8 @@ function generarPDFEspecular() {
   const single = especularSolo ? db.deudores.find(x => x.id === especularId) : null;
   let lista = single ? [single] : personaDeudores(especularId);
   if (!lista.length) return;
+  lista = lista.filter(ld => !calcularDeudor(ld).completo);
+  if (!lista.length) { alert('No hay préstamos vigentes para especular.'); return; }
   const pActual = calcularPersona(lista);
   const d = lista[0];
   const multi = lista.length > 1;
