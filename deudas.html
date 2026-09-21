@@ -404,7 +404,28 @@ footer { text-align: center; padding: 1.8rem 1rem 2.2rem; color: var(--text3); f
     </div>
     <div class="modal-footer">
       <button class="btn btn-primary" onclick="exportarPDF(estadoActual)">📄 Exportar PDF</button>
+      <button class="btn btn-secondary" style="background:var(--warn);color:#fff;" onclick="especular(estadoActual)">🔮 Especular</button>
       <button class="btn btn-secondary" onclick="cerrarModal('modal-detalle')">Cerrar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL ESPECULAR -->
+<div id="modal-especular" class="modal" style="display:none;">
+  <div class="modal-content small">
+    <div class="modal-header">
+      <h2>🔮 Especular cobro</h2>
+      <button class="modal-close" onclick="cerrarModal('modal-especular')">&times;</button>
+    </div>
+    <div class="modal-body">
+      <p id="espec-nombre" style="font-weight:700;margin-bottom:.6rem;"></p>
+      <div class="form-group"><label>Fecha de cobro estimada</label><input type="date" id="espec-fecha" onchange="renderEspecular()"></div>
+      <div id="espec-result" style="margin-top:1rem;"></div>
+      <p class="nota">Cálculo: 10% hasta 7 días · 20% hasta 15 días · 30% por mes después. Préstamos especiales mantienen monto fijo.</p>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="cerrarModal('modal-especular')">Cerrar</button>
+      <button class="btn btn-primary" onclick="generarPDFEspecular()">📄 Generar PDF especulativo</button>
     </div>
   </div>
 </div>
@@ -842,6 +863,7 @@ function renderLista() {
           <button class="btn btn-primary btn-sm" onclick="abrirDetalle('${ld.id}','${ld.id}')">👁 Ver</button>
           <button class="btn btn-secondary btn-sm" onclick="editarDeuda('${ld.id}')">✏️</button>
           <button class="btn btn-success btn-sm" onclick="exportarPDF('${ld.id}',true)">📄 PDF</button>
+          <button class="btn btn-secondary btn-sm" style="background:#e65100;color:#fff;" onclick="especular('${ld.id}',true)">🔮</button>
         </div></td>
       </tr>`;
     }).join('');
@@ -861,6 +883,7 @@ function renderLista() {
         <button class="btn btn-primary btn-sm" onclick="abrirDetalle('${d.id}')">👁 Ver</button>
         <button class="btn btn-secondary btn-sm" onclick="editarDeuda('${d.id}')">✏️ Editar</button>
         <button class="btn btn-success btn-sm" onclick="exportarPDF('${d.id}')">📄 PDF</button>
+        <button class="btn btn-secondary btn-sm" style="background:#e65100;color:#fff;" onclick="especular('${d.id}')">🔮 Especular</button>
         <button class="btn btn-primary btn-sm" onclick="nuevoPrestamo('${d.id}')">💰 Nuevo Préstamo</button>
       </div></td>
     </tr>`;
@@ -1648,6 +1671,165 @@ function exportarPDFWhatsApp(id, solo) {
   doc.text('Versión para WhatsApp — Control de Saldo Pendiente', M, doc.internal.pageSize.getHeight() - 20);
 
   mostrarPreviewPDF(doc, 'saldo_pendiente_whatsapp_' + (d.nombre || 'deudor').replace(/\s+/g, '_') + '.pdf', id, solo);
+}
+
+// ============== ESPECULAR (cálculo con fecha futura) ==============
+let especularId = null, especularSolo = false;
+function diasEntre(fIni, fFin) {
+  if (!fIni || !fFin) return 0;
+  const a = new Date(fIni + 'T00:00:00'), b = new Date(fFin + 'T00:00:00');
+  if (isNaN(a) || isNaN(b) || b < a) return 0;
+  return Math.floor((b - a) / 86400000);
+}
+function calcularDeudorEspeculado(d, fechaFutura) {
+  const monto = +d.monto || 0;
+  const especial = !!d.especial;
+  let dias, tasa, interesGenerado;
+  if (especial) {
+    dias = diasEntre(d.fechaInicio, fechaFutura);
+    tasa = { label: 'Interés fijo', rate: 0, corto: 'Fijo' };
+    interesGenerado = Math.max(0, +d.interesFijo || 0);
+  } else {
+    dias = diasEntre(d.fechaInicio, fechaFutura);
+    tasa = tasaActiva(dias);
+    interesGenerado = interesGeneradoDe(monto, dias);
+  }
+  let saldoCapital = monto, interesPagado = 0, totalPagado = 0, completo = false;
+  (d.pagos || []).forEach(p => {
+    const m = +p.monto || 0; totalPagado += m;
+    if (p.tipo === 'capital') saldoCapital = Math.max(0, saldoCapital - m);
+    else if (p.tipo === 'interes') interesPagado += m;
+    else if (p.tipo === 'completo') completo = true;
+  });
+  if (completo) { saldoCapital = 0; interesPagado = Math.max(interesPagado, interesGenerado); }
+  const interesPendiente = Math.max(0, interesGenerado - interesPagado);
+  return { monto, especial, dias, tasa, interesGenerado, interesPagado, interesPendiente, saldoCapital, total: saldoCapital + interesPendiente, totalPagado, completo };
+}
+function especular(id, solo) {
+  const single = solo ? db.deudores.find(x => x.id === id) : null;
+  let lista = single ? [single] : personaDeudores(id);
+  if (!lista.length) return;
+  especularId = single ? single.id : (personaDeudores(id)[0] || {}).id;
+  especularSolo = !!solo;
+  const d = lista[0];
+  document.getElementById('espec-nombre').textContent = (d.nombre || '') + (d.telefono ? ' — ' + d.telefono : '') + (lista.length > 1 && !solo ? ' (' + lista.length + ' préstamos)' : '');
+  const def = new Date(); def.setDate(def.getDate() + 30);
+  document.getElementById('espec-fecha').value = def.toISOString().slice(0,10);
+  document.getElementById('espec-fecha').min = hoy();
+  renderEspecular();
+  abrirModal('modal-especular');
+}
+function renderEspecular() {
+  const fecha = document.getElementById('espec-fecha').value;
+  if (!fecha) return;
+  const single = especularSolo ? db.deudores.find(x => x.id === especularId) : null;
+  let lista = single ? [single] : personaDeudores(especularId);
+  if (!lista.length) return;
+  const esEspecialMulti = lista.every(x => x.especial);
+  let html = '<div style="display:grid;gap:.5rem;">';
+  let totalMonto = 0, totalInteresPend = 0, totalSaldoCap = 0, totalFinal = 0, totalPagado = 0;
+  lista.forEach((ld, i) => {
+    const actual = calcularDeudor(ld);
+    const esp = calcularDeudorEspeculado(ld, fecha);
+    totalMonto += esp.monto; totalInteresPend += esp.interesPendiente; totalSaldoCap += esp.saldoCapital; totalFinal += esp.total; totalPagado += esp.totalPagado;
+    const label = lista.length > 1 ? 'Préstamo ' + (i+1) + ' (' + fmtFecha(ld.fechaInicio) + ')' : 'Préstamo (' + fmtFecha(ld.fechaInicio) + ')';
+    const interesTxt = ld.especial ? 'Fijo ' + fmt(esp.interesGenerado) : esp.tasa.corto + ' → ' + fmt(esp.interesGenerado);
+    html += '<div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:.6rem .7rem;">'
+      + '<div style="font-weight:700;font-size:.85rem;">' + label + '</div>'
+      + '<div style="font-size:.82rem;color:var(--text2);">Ahora: ' + fmt(actual.total) + ' (' + (ld.especial ? 'Fijo' : actual.tasa.corto) + ') → Cobro ' + fmtFecha(fecha) + ': <strong style="color:var(--primary);">' + fmt(esp.total) + '</strong></div>'
+      + '<div style="font-size:.78rem;color:var(--text3);">' + fmt(esp.monto) + ' + ' + interesTxt + (esp.totalPagado ? ' - ' + fmt(esp.totalPagado) + ' pagado' : '') + ' = ' + fmt(esp.total) + ' · ' + esp.dias + ' días</div>'
+      + '</div>';
+  });
+  if (lista.length > 1) {
+    html += '<div style="background:var(--primary-light);border:1px solid var(--primary);border-radius:8px;padding:.7rem;text-align:center;">'
+      + '<div style="font-size:.75rem;color:var(--text3);text-transform:uppercase;letter-spacing:.3px;">Total especulado para ' + fmtFecha(fecha) + '</div>'
+      + '<div style="font-size:1.3rem;font-weight:800;color:var(--primary);">' + fmt(totalFinal) + '</div>'
+      + '<div style="font-size:.75rem;color:var(--text3);">' + fmt(totalMonto) + ' capital + ' + fmt(totalInteresPend) + ' interés pendiente</div>'
+      + '</div>';
+  }
+  html += '</div>';
+  document.getElementById('espec-result').innerHTML = html;
+}
+function generarPDFEspecular() {
+  const fecha = document.getElementById('espec-fecha').value;
+  if (!fecha) { alert('Elige una fecha de cobro.'); return; }
+  const single = especularSolo ? db.deudores.find(x => x.id === especularId) : null;
+  let lista = single ? [single] : personaDeudores(especularId);
+  if (!lista.length) return;
+  const pActual = calcularPersona(lista);
+  const d = lista[0];
+  const multi = lista.length > 1;
+  if (typeof window.jspdf === 'undefined') { alert('No se pudo cargar jsPDF.'); return; }
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+  const M = 14, W = doc.internal.pageSize.getWidth() - M * 2;
+  const PH = doc.internal.pageSize.getHeight();
+  let y = 0;
+  function checkPage() { if (y > PH - 35) { doc.addPage(); y = 20; } }
+  doc.setFillColor(230, 81, 0);
+  doc.rect(0, 0, doc.internal.pageSize.getWidth(), 26, 'F');
+  doc.setTextColor(255, 255, 255);
+  doc.setFont('helvetica', 'bold'); doc.setFontSize(16);
+  doc.text('ESPECULACION DE COBRO', M, 12);
+  doc.setFontSize(9); doc.setFont('helvetica', 'normal');
+  doc.text('Estimacion — no es cobro actual', M, 20);
+  y = 36;
+  doc.setTextColor(30, 30, 46);
+  doc.setFont('helvetica', 'bold'); doc.setFontSize(13);
+  doc.text('Prestatario: ' + (d.nombre || ''), M, y); y += 6;
+  doc.setFont('helvetica', 'normal'); doc.setFontSize(10);
+  if (d.telefono) { doc.text('Telefono: ' + d.telefono, M, y); y += 5; }
+  if (multi) { doc.text('Prestamos incluidos: ' + lista.length, M, y); y += 5; }
+  doc.setFont('helvetica', 'bold'); doc.setFontSize(11);
+  doc.text('Fecha de cobro estimada: ' + fmtFecha(fecha), M, y); y += 4;
+  doc.setFont('helvetica', 'normal'); doc.setFontSize(8);
+  doc.setTextColor(100,100,100);
+  doc.text('Fecha de emision: ' + new Date().toLocaleDateString('es-PE', { day:'2-digit', month:'long', year:'numeric' }), M, y); y += 8;
+  // Bloque actual vs especulado
+  doc.setFillColor(255, 243, 224); doc.setDrawColor(230,81,0); doc.setLineWidth(0.4);
+  const boxH = 18 + (multi ? lista.length * 6 : 6) + 8;
+  checkPage();
+  doc.roundedRect(M, y, W, boxH, 2, 2, 'FD');
+  doc.setFont('helvetica', 'bold'); doc.setFontSize(10); doc.setTextColor(230,81,0);
+  doc.text('Comparativa', M+4, y+7);
+  doc.setFont('helvetica', 'normal'); doc.setFontSize(8.5); doc.setTextColor(30,30,46);
+  let ly = y+13;
+  doc.text('• Total actual (hoy ' + fmtFecha(hoy()) + '): ' + fmt(pActual.total) + '  (capital ' + fmt(pActual.saldoCapital) + ' + interes ' + fmt(pActual.interesPendiente) + ')', M+4, ly); ly+=6;
+  let totEsp = 0, totMonto=0, totIntPend=0;
+  lista.forEach((ld,i)=>{
+    const esp = calcularDeudorEspeculado(ld, fecha);
+    totEsp+=esp.total; totMonto+=esp.monto; totIntPend+=esp.interesPendiente;
+    const tag = ld.especial ? 'Fijo' : esp.tasa.corto;
+    doc.text('• ' + (multi ? 'Prestamo '+(i+1)+' ' : '') + '('+fmtFecha(ld.fechaInicio)+'): ' + fmt(esp.monto) + ' + ' + fmt(esp.interesGenerado) + ' ('+tag+', '+esp.dias+' dias)' + (esp.totalPagado?' - '+fmt(esp.totalPagado)+' pagado':'') + ' = ' + fmt(esp.total), M+4, ly); ly+=6;
+  });
+  y += boxH + 6;
+  // Detalle por prestamo tabla especulada
+  if (lista.length) {
+    checkPage();
+    doc.setFont('helvetica','bold'); doc.setFontSize(11); doc.setTextColor(30,30,46);
+    doc.text('Detalle especulado', M, y); y+=2;
+    const head = multi ? ['Prestamo','Monto','Tasa','Dias','Total especulado'] : ['Monto','Tasa','Dias','Total especulado'];
+    const body = lista.map(ld=>{
+      const esp = calcularDeudorEspeculado(ld, fecha);
+      return multi ? [fmtFecha(ld.fechaInicio), fmt(esp.monto), ld.especial?'Fijo':esp.tasa.corto, String(esp.dias), fmt(esp.total)] : [fmt(esp.monto), ld.especial?'Fijo':esp.tasa.corto, String(esp.dias), fmt(esp.total)];
+    });
+    doc.autoTable({ startY: y, margin:{left:M,right:M}, head:[head], body: body, theme:'grid', headStyles:{fillColor:[230,81,0], fontSize:9}, styles:{fontSize:9, cellPadding:2} });
+    y = doc.lastAutoTable.finalY + 8;
+  }
+  // Total especulado destacado
+  checkPage();
+  doc.setFillColor(230,81,0);
+  doc.roundedRect(M, y, W, 28, 2, 2, 'F');
+  doc.setTextColor(255,255,255);
+  doc.setFont('helvetica','bold'); doc.setFontSize(11);
+  doc.text('TOTAL ESTIMADO PARA ' + fmtFecha(fecha).toUpperCase(), M+4, y+10);
+  doc.setFontSize(13);
+  doc.text(fmt(totEsp || totMonto+totIntPend), M+4, y+20);
+  y+=34;
+  doc.setFontSize(8); doc.setTextColor(140,140,140);
+  doc.text('Especulacion: el monto puede variar si hay pagos parciales antes de la fecha. Documento no valido como cobro actual.', M, doc.internal.pageSize.getHeight()-8);
+  cerrarModal('modal-especular');
+  mostrarPreviewPDF(doc, 'especulacion_' + (d.nombre||'deudor').replace(/\s+/g,'_') + '_' + fecha + '.pdf', especularId, especularSolo);
 }
 
 // ============== EXPORTAR HOJA DE CÁLCULO (CSV ordenado) ==============
