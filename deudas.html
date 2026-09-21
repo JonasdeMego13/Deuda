@@ -250,7 +250,9 @@ footer { text-align: center; padding: 1.8rem 1rem 2.2rem; color: var(--text3); f
   <nav>
     <button onclick="abrirCalculadora()">🧮 Calculadora</button>
     <button onclick="abrirResumenDeudor()">📊 Resumen</button>
-    <button onclick="exportarHojaCSV()">📥 Exportar hoja</button>
+    <button onclick="exportarHojaCSV()">📥 Exportar</button>
+    <button onclick="document.getElementById('import-csv-input').click()">📤 Importar</button>
+    <input type="file" id="import-csv-input" accept=".csv" style="display:none" onchange="importarHojaCSV(event)">
     <span class="sync-badge" id="sync-status" title="Estado de sincronización — pulsa para sincronizar" onclick="sincronizarAhora()" style="cursor:pointer;">☁️ —</span>
     <button onclick="logout()">🚪 Salir</button>
     <button onclick="toggleTema()" id="tema-btn">🌙</button>
@@ -2052,6 +2054,80 @@ function copiarJSONCompleto() {
   navigator.clipboard.writeText(txt).then(() => alert('JSON copiado al portapapeles (' + db.deudores.length + ' prestamos)')).catch(() => {
     const w = window.open('', '_blank'); w.document.write('<pre>' + esc(txt) + '</pre>'); w.document.close();
   });
+}
+function parseCSVLine(line) {
+  const out = []; let cur = '', inQ = false;
+  for (let i = 0; i < line.length; i++) {
+    const ch = line[i];
+    if (inQ) {
+      if (ch === '"' && line[i+1] === '"') { cur += '"'; i++; }
+      else if (ch === '"') inQ = false;
+      else cur += ch;
+    } else {
+      if (ch === '"') inQ = true;
+      else if (ch === ',') { out.push(cur); cur = ''; }
+      else cur += ch;
+    }
+  }
+  out.push(cur);
+  return out;
+}
+function importarHojaCSV(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const text = e.target.result;
+      const lines = text.split(/\r?\n/);
+      const rows = lines.filter(l => l.trim() !== '').map(parseCSVLine);
+      if (!rows.length) throw new Error('CSV vacio');
+      // Detecta secciones por encabezado
+      let prestIdx = rows.findIndex(r => r[0] === 'ID' && r[1] === 'Persona');
+      let pagoIdx = rows.findIndex(r => r[0] === 'PrestamoID' && r[2] === 'PagoID');
+      let tramIdx = rows.findIndex(r => r[0] === 'PrestamoID' && r[2] === 'TramiteID');
+      if (prestIdx === -1) throw new Error('Encabezado de prestamos no encontrado (ID,Persona...)');
+      const nuevos = [];
+      const finPrest = pagoIdx !== -1 ? pagoIdx : tramIdx !== -1 ? tramIdx : rows.length;
+      for (let i = prestIdx + 1; i < finPrest; i++) {
+        const r = rows[i];
+        if (r.length < 9) continue;
+        const [id, nombre, telefono, monto, fechaInicio, especial, interesFijo, tipoCobro, notas] = r;
+        if (!nombre) continue;
+        nuevos.push({ id: id || 'd' + Date.now() + Math.random().toString(36).slice(2,6), nombre, telefono, monto: parseFloat(monto) || 0, fechaInicio, especial: String(especial).toUpperCase() === 'SI', interesFijo: parseFloat(interesFijo) || 0, tipoCobro: tipoCobro || 'interes', notas: (notas || '').replace(/ \| /g, '\n'), pagos: [], tramites: [] });
+      }
+      // Indexa por ID para anexar pagos/tramites
+      const map = {}; nuevos.forEach(d => map[d.id] = d);
+      if (pagoIdx !== -1) {
+        const finPago = tramIdx !== -1 ? tramIdx : rows.length;
+        for (let i = pagoIdx + 1; i < finPago; i++) {
+          const r = rows[i]; if (r.length < 8) continue;
+          const [prestId, , pagoId, fecha, monto, metodo, tipo, nota] = r;
+          const d = map[prestId]; if (!d) continue;
+          d.pagos.push({ id: pagoId || 'p' + Date.now() + Math.random().toString(36).slice(2,4), fecha, monto: parseFloat(monto) || 0, metodo: metodo || 'otro', tipo: tipo || 'interes', nota: (nota || '').replace(/ \| /g, '\n') });
+        }
+      }
+      if (tramIdx !== -1) {
+        for (let i = tramIdx + 1; i < rows.length; i++) {
+          const r = rows[i]; if (r.length < 5) continue;
+          const [prestId, , tramId, fecha, texto] = r;
+          const d = map[prestId]; if (!d) continue;
+          d.tramites.push({ id: tramId || 't' + Date.now() + Math.random().toString(36).slice(2,4), fecha, texto: (texto || '').replace(/ \| /g, '\n') });
+        }
+      }
+      if (!nuevos.length) throw new Error('No se encontraron prestamos validos');
+      if (!confirm('Se encontraron ' + nuevos.length + ' prestamos con ' + nuevos.reduce((a,d)=>a+d.pagos.length,0) + ' pagos. ¿Importar? Se añadiran a los existentes.')) return;
+      db.deudores.push(...nuevos);
+      guardar(); renderLista(); renderResumen();
+      alert('Importados ' + nuevos.length + ' prestamos correctamente.');
+    } catch (err) {
+      alert('Error al importar: ' + err.message);
+      console.error(err);
+    } finally {
+      event.target.value = '';
+    }
+  };
+  reader.readAsText(file, 'utf-8');
 }
 
 // ============== INIT ==============
