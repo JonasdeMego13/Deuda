@@ -114,7 +114,9 @@ tr.sub-row:hover td { background: var(--bg2); }
 .badge-tramite { background: var(--bg4); color: var(--text2); }
 
 .panel { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.2rem 1.2rem 1.5rem; box-shadow: var(--shadow); }
-.panel-toolbar { display: flex; gap: .8rem; align-items: center; margin-bottom: 1rem; }
+.panel-toolbar { display: flex; gap: .8rem; align-items: center; flex-wrap: wrap; margin-bottom: 1rem; }
+.check-ocultar { display: inline-flex; align-items: center; gap: .45rem; font-size: .85rem; font-weight: 600; color: var(--text2); cursor: pointer; white-space: nowrap; user-select: none; }
+.check-ocultar input { width: 16px; height: 16px; margin: 0; accent-color: var(--primary); cursor: pointer; }
 .search-bar { position: relative; flex: 1; max-width: 420px; }
 .search-bar::before { content: '🔍'; position: absolute; left: .7rem; top: 50%; transform: translateY(-50%); opacity: .5; font-size: .85rem; pointer-events: none; }
 .search-bar input { width: 100%; padding: .6rem .8rem .6rem 2.2rem; border: 1.5px solid var(--border2); border-radius: var(--radius-sm); font-size: .88rem; background: var(--bg2); color: var(--text); outline: none; transition: all .2s; }
@@ -281,6 +283,9 @@ footer { text-align: center; padding: 1.8rem 1rem 2.2rem; color: var(--text3); f
       <div class="search-bar">
         <input type="text" id="searchDeudor" placeholder="Buscar por nombre o teléfono..." oninput="renderLista()">
       </div>
+      <label class="check-ocultar" title="Oculta de la lista los préstamos ya liquidados">
+        <input type="checkbox" id="ocultarLiquidados" onchange="toggleOcultarLiquidados()"> Ocultar liquidados
+      </label>
     </div>
     <div id="tabla-wrapper"></div>
     <div id="empty-state" class="empty-msg" style="display:none;">
@@ -818,13 +823,35 @@ function aplicarTotales() {
 }
 
 // ============== LISTA ==============
+const personasExpandidas = new Set();
+function ocultarLiquidadosActivo() {
+  const chk = document.getElementById('ocultarLiquidados');
+  return !!(chk && chk.checked);
+}
+function toggleOcultarLiquidados() {
+  const chk = document.getElementById('ocultarLiquidados');
+  localStorage.setItem('deudas_ocultar_liquidados', chk && chk.checked ? '1' : '0');
+  renderLista();
+}
+function esPrestamoLiquidado(c) { return c.completo || c.total <= 0; }
 function renderLista() {
   const q = (document.getElementById('searchDeudor').value || '').toLowerCase();
-  const grupos = gruposPersonas().filter(g =>
+  const ocultarLiq = ocultarLiquidadosActivo();
+  let grupos = gruposPersonas().filter(g =>
     g.some(d => (d.nombre || '').toLowerCase().includes(q) || (d.telefono || '').toLowerCase().includes(q))
   );
-  document.getElementById('empty-state').style.display = grupos.length ? 'none' : 'block';
-  if (!grupos.length) { document.getElementById('tabla-wrapper').innerHTML = ''; return; }
+  if (ocultarLiq) {
+    grupos = grupos.filter(g => g.some(d => !esPrestamoLiquidado(calcularDeudor(d))));
+  }
+  const empty = document.getElementById('empty-state');
+  empty.style.display = grupos.length ? 'none' : 'block';
+  if (!grupos.length) {
+    empty.innerHTML = ocultarLiq && db.deudores.length
+      ? '<div class="empty-icon">✅</div>No hay préstamos pendientes.<br>Los liquidados están ocultos.'
+      : '<div class="empty-icon">📭</div>No hay deudores registrados todavía.<br>Pulsa <strong>＋ Nuevo Préstamo</strong> para empezar.';
+    document.getElementById('tabla-wrapper').innerHTML = '';
+    return;
+  }
 
   let html = `<table><thead><tr>
     <th>Persona</th><th>Inicio</th><th>Préstamos</th><th>Tipo de cobro</th><th class="num">Capital</th><th class="num">Int. pendiente</th><th class="num">Total saldo pendiente</th><th>Estado</th><th>Acciones</th>
@@ -833,19 +860,22 @@ function renderLista() {
   grupos.forEach(g => {
     const p = calcularPersona(g);
     const d = g[0];
+    const visibles = ocultarLiq ? g.filter(x => !esPrestamoLiquidado(calcularDeudor(x))) : g;
+    const dv = visibles[0];
     const estado = estadoPersona(p);
     const badgeEst = estado === 'Liquidado' || estado === 'Al día' ? 'badge-ok' : 'badge-pend';
-    const todosInteres = g.every(x => x.tipoCobro !== 'capital');
-    const todosCapital = g.every(x => x.tipoCobro === 'capital');
+    const todosInteres = visibles.every(x => x.tipoCobro !== 'capital');
+    const todosCapital = visibles.every(x => x.tipoCobro === 'capital');
     const tipo = todosCapital ? '<span class="badge badge-capital">Monto completo</span>'
       : todosInteres ? '<span class="badge badge-interes">Solo interés</span>'
       : '<span class="badge badge-tramite">Mixto</span>';
-    const prestamosCell = g.length > 1
-      ? '<span class="badge badge-pend">' + g.length + ' préstamos</span>'
-      : (d.especial ? '<span class="badge badge-capital">Especial</span>' : calcularDeudor(d).tasa.corto);
-    const inicio = g.map(x => x.fechaInicio).filter(Boolean).sort()[0];
+    const prestamosCell = visibles.length > 1
+      ? '<span class="badge badge-pend">' + visibles.length + ' préstamos</span>'
+      : (dv.especial ? '<span class="badge badge-capital">Especial</span>' : calcularDeudor(dv).tasa.corto);
+    const inicio = visibles.map(x => x.fechaInicio).filter(Boolean).sort()[0];
     const pid = d.id;
-    const subRows = g.map(ld => {
+    const abierto = personasExpandidas.has(pid);
+    const subRows = visibles.map(ld => {
       const lc = calcularDeudor(ld);
       const estL = lc.completo ? 'Liquidado' : lc.total > 0 ? 'Pendiente' : 'Al día';
       const badgeL = estL === 'Liquidado' || estL === 'Al día' ? 'badge-ok' : 'badge-pend';
@@ -869,7 +899,7 @@ function renderLista() {
     }).join('');
     html += `<tr>
       <td data-label="Persona">
-        ${g.length > 1 ? `<button class="btn-toggle" data-pid="${pid}" onclick="togglePersonaSub('${pid}')">▸</button>` : ''}
+        ${visibles.length > 1 ? `<button class="btn-toggle" data-pid="${pid}" onclick="togglePersonaSub('${pid}')">${abierto ? '▾' : '▸'}</button>` : ''}
         <strong>${esc(d.nombre || '')}</strong><div class="nota">${esc(d.telefono || '')}</div>
       </td>
       <td data-label="Inicio">${fmtFecha(inicio)}</td>
@@ -887,8 +917,8 @@ function renderLista() {
         <button class="btn btn-primary btn-sm" onclick="nuevoPrestamo('${d.id}')">💰 Nuevo Préstamo</button>
       </div></td>
     </tr>`;
-    if (g.length > 1) {
-      html += `<tr class="sub-row" id="sub-${pid}" style="display:none;">
+    if (visibles.length > 1) {
+      html += `<tr class="sub-row" id="sub-${pid}"${abierto ? '' : ' style="display:none;"'}>
         <td colspan="9"><div class="sub-table-wrap">
           <table class="sub-table"><thead><tr>
             <th>Inicio</th><th>Monto</th><th>Interés</th><th>Tipo</th><th class="num">Capital</th><th class="num">Int. pendiente</th><th class="num">Total</th><th>Estado</th><th>Acciones</th>
@@ -905,6 +935,7 @@ function togglePersonaSub(id) {
   if (!row) return;
   const open = row.style.display === 'none';
   row.style.display = open ? '' : 'none';
+  if (open) personasExpandidas.add(id); else personasExpandidas.delete(id);
   document.querySelectorAll('[data-pid="' + id + '"]').forEach(b => { b.textContent = open ? '▾' : '▸'; });
 }
 
@@ -2031,6 +2062,8 @@ function importarHojaCSV(event) {
 
 // ============== INIT ==============
 (async function () {
+  const chkOcultar = document.getElementById('ocultarLiquidados');
+  if (chkOcultar) chkOcultar.checked = localStorage.getItem('deudas_ocultar_liquidados') === '1';
   renderResumen();
   renderLista();
   aplicarTotales();
