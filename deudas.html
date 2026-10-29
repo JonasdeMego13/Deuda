@@ -326,7 +326,7 @@ footer { text-align: center; padding: 1.8rem 1rem 2.2rem; color: var(--text3); f
         </div>
         <div class="form-group full"><label>Notas / acuerdos</label><textarea id="d_notas" placeholder="Acuerdos, condiciones, avales..."></textarea></div>
       </div>
-      <p class="nota" id="d_nota_interes">💡 Intereses: <strong>10%</strong> si paga hasta 7 días · <strong>20%</strong> hasta 15 días · <strong>30% por mes</strong> después (el 2.º mes desde el día 32).</p>
+      <p class="nota" id="d_nota_interes">💡 Intereses: <strong>10%</strong> si paga hasta 7 días · <strong>20%</strong> hasta 15 días · <strong>30% por mes</strong> después (mes 2 desde el día 32, mes 3 desde el 62, mes 4 desde el 92…).</p>
       <p class="nota" id="d_nota_especial" style="display:none;">⭐ Préstamo especial sin interés: el <strong>monto fijo</strong> que pongas (0 o el valor que elijas) se mantiene igual hasta el pago del saldo pendiente.</p>
     </div>
     <div class="modal-footer">
@@ -426,7 +426,7 @@ footer { text-align: center; padding: 1.8rem 1rem 2.2rem; color: var(--text3); f
       <p id="espec-nombre" style="font-weight:700;margin-bottom:.6rem;"></p>
       <div class="form-group"><label>Fecha de cobro estimada</label><input type="date" id="espec-fecha" onchange="renderEspecular()"></div>
       <div id="espec-result" style="margin-top:1rem;"></div>
-      <p class="nota">Cálculo: 10% hasta 7 días · 20% hasta 15 días · 30% por mes después (el 2.º mes desde el día 32). Préstamos especiales mantienen monto fijo.</p>
+      <p class="nota">Cálculo: 10% hasta 7 días · 20% hasta 15 días · 30% por mes después (mes 2 desde el día 32, mes 3 desde el 62, mes 4 desde el 92…). Préstamos especiales mantienen monto fijo.</p>
     </div>
     <div class="modal-footer">
       <button class="btn btn-secondary" onclick="cerrarModal('modal-especular')">Cerrar</button>
